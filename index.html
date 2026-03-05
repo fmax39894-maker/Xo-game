@@ -4,6 +4,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>XO Online Pro</title>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
 <style>
 body{
 margin:0;
@@ -11,9 +14,9 @@ font-family:sans-serif;
 background:linear-gradient(135deg,#1f1c2c,#928dab);
 color:white;
 text-align:center;
-min-height:100vh;
 }
 
+/* Top bar */
 .topBar{
 display:flex;
 justify-content:space-between;
@@ -21,26 +24,7 @@ padding:10px;
 background:linear-gradient(90deg,#ff512f,#dd2476);
 }
 
-h2,h3{
-margin:10px 0;
-}
-
-button{
-padding:10px 15px;
-border:none;
-border-radius:8px;
-margin:5px;
-cursor:pointer;
-background:linear-gradient(45deg,#00c6ff,#0072ff);
-color:white;
-}
-
-input{
-padding:8px;
-border-radius:6px;
-border:none;
-}
-
+/* Board */
 .board{
 display:grid;
 grid-template-columns:repeat(3,100px);
@@ -52,12 +36,22 @@ margin:20px auto;
 .cell{
 width:100px;
 height:100px;
-background:linear-gradient(145deg,#232526,#414345);
 display:flex;
 justify-content:center;
 align-items:center;
 font-size:40px;
-border-radius:10px;
+cursor:pointer;
+border-radius:12px;
+background:linear-gradient(145deg,#232526,#414345);
+}
+
+button{
+padding:8px 15px;
+margin:5px;
+border:none;
+border-radius:8px;
+background:linear-gradient(45deg,#ff416c,#ff4b2b);
+color:white;
 cursor:pointer;
 }
 
@@ -68,81 +62,78 @@ width:100%;
 background:#111;
 max-height:150px;
 overflow:auto;
-padding:10px;
+padding:5px;
 }
 
 .roomItem{
 display:flex;
 justify-content:space-between;
-background:#333;
 padding:5px;
-margin:5px 0;
-border-radius:5px;
+margin:3px 0;
+background:#333;
+border-radius:6px;
 }
 
 #messages{
-height:120px;
+height:100px;
 overflow:auto;
 background:#222;
+margin:10px;
 padding:5px;
 border-radius:6px;
 text-align:left;
 }
 </style>
 </head>
+
 <body>
 
-<!-- LOBBY -->
+<!-- FIRST SCREEN -->
 <div id="lobby">
 
 <div class="topBar">
 <div>
-<input id="playerName" placeholder="Enter your name">
+Enter Name:
+<input id="playerName">
 </div>
 <div>
-Live Players: <span id="livePlayers">0</span>
+Live Players: <span id="liveCount">0</span>
 </div>
 </div>
 
-<h2>XO ONLINE</h2>
+<h2>XO Online</h2>
 
-<button onclick="createRoom()">Play (Create Room)</button>
+<button onclick="createRoom()">Create Room</button>
 
 <div id="roomsList"></div>
 
 </div>
 
 <!-- GAME SCREEN -->
-<div id="game" style="display:none;">
-
-<h3 id="roomIdDisplay"></h3>
+<div id="game" style="display:none">
 
 <div class="topBar">
-<div id="playerXInfo"></div>
-<div id="playerOInfo"></div>
+<div id="player1"></div>
+<div>Room: <span id="roomIdDisplay"></span></div>
+<div id="player2"></div>
 </div>
 
-<div id="status"></div>
+<div id="board" class="board"></div>
 
-<div class="board" id="board"></div>
+<h3 id="status"></h3>
 
-<button id="restartBtn" onclick="restartGame()">Restart</button>
-<button onclick="leaveRoom()">Leave</button>
-
-<h3>Chat</h3>
 <div id="messages"></div>
-<input id="chatInput" placeholder="Message">
+<input id="chatInput">
 <button onclick="sendMessage()">Send</button>
 
-</div>
+<br>
+<button onclick="leaveRoom()">Leave</button>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</div>
 
 <script>
 
-// 🔥 PASTE YOUR FIREBASE CONFIG HERE
+/* 🔥 PASTE YOUR FIREBASE CONFIG HERE */
 var firebaseConfig = {
   apiKey: "AIzaSyA-ZZDjD7gKPYQedUZiTLSBMMyY6oZJT7g",
   authDomain: "xo-online-771de.firebaseapp.com",
@@ -159,194 +150,149 @@ var db = firebase.database();
 let playerName="";
 let roomId="";
 let symbol="";
-let board=["","","","","","","","",""];
-let myTurn=false;
-let cooldown=false;
+let currentTurn="X";
 
-// Create board
-const boardDiv=document.getElementById("board");
-for(let i=0;i<9;i++){
- let cell=document.createElement("div");
- cell.className="cell";
- cell.onclick=()=>makeMove(i);
- boardDiv.appendChild(cell);
-}
+/* Track live players */
+let userRef = db.ref("onlineUsers").push();
+userRef.set(true);
+userRef.onDisconnect().remove();
 
-// Online counter
-const myOnlineId=Math.random().toString(36);
-db.ref("onlinePlayers/"+myOnlineId).set(true);
-db.ref("onlinePlayers/"+myOnlineId).onDisconnect().remove();
-
-db.ref("onlinePlayers").on("value",snap=>{
- document.getElementById("livePlayers").innerText=snap.numChildren();
+db.ref("onlineUsers").on("value",snap=>{
+document.getElementById("liveCount").innerText=snap.numChildren();
 });
 
-// Live rooms
-db.ref("rooms").on("value",snap=>{
- const rooms=snap.val();
- const list=document.getElementById("roomsList");
- list.innerHTML="<h3>Live Rooms</h3>";
- if(!rooms) return;
-
- for(let id in rooms){
-   list.innerHTML+=`
-   <div class="roomItem">
-   <span>${id}</span>
-   <button onclick="joinRoom('${id}')">Join</button>
-   </div>`;
- }
-});
-
+/* Create Room */
 function createRoom(){
- playerName=document.getElementById("playerName").value;
- if(!playerName) return alert("Enter your name");
+playerName=document.getElementById("playerName").value;
+if(!playerName) return alert("Enter name");
 
- roomId=Math.random().toString(36).substr(2,6);
- symbol="X";
+roomId="room_"+Math.floor(Math.random()*100000);
+symbol="X";
 
- db.ref("rooms/"+roomId).set({
-   players:{X:playerName},
-   board:["","","","","","","","",""],
-   turn:"X",
-   winner:"",
-   score:{X:0,O:0},
-   chat:{}
- });
+db.ref("rooms/"+roomId).set({
+player1:playerName,
+player2:"",
+board:["","","","","","","","",""],
+turn:"X"
+});
 
- startGame();
+openGame();
 }
 
+/* Show live rooms */
+db.ref("rooms").on("value",snap=>{
+let list=document.getElementById("roomsList");
+list.innerHTML="";
+snap.forEach(room=>{
+let data=room.val();
+if(data.player2==""){
+let div=document.createElement("div");
+div.className="roomItem";
+div.innerHTML=`
+<span>${room.key}</span>
+<button onclick="joinRoom('${room.key}')">Join</button>
+`;
+list.appendChild(div);
+}
+});
+});
+
+/* Join Room */
 function joinRoom(id){
- playerName=document.getElementById("playerName").value;
- if(!playerName) return alert("Enter your name");
+playerName=document.getElementById("playerName").value;
+if(!playerName) return alert("Enter name");
 
- roomId=id;
- symbol="O";
+roomId=id;
+symbol="O";
 
- db.ref("rooms/"+roomId+"/players/O").set(playerName);
- startGame();
+db.ref("rooms/"+roomId+"/player2").set(playerName);
+openGame();
 }
 
-function startGame(){
- document.getElementById("lobby").style.display="none";
- document.getElementById("game").style.display="block";
- document.getElementById("roomIdDisplay").innerText="Room ID: "+roomId;
+/* Open Game */
+function openGame(){
+document.getElementById("lobby").style.display="none";
+document.getElementById("game").style.display="block";
+document.getElementById("roomIdDisplay").innerText=roomId;
 
- db.ref("rooms/"+roomId).on("value",snap=>{
-   const data=snap.val();
-   if(!data) return;
-
-   board=data.board;
-   updateBoard();
-
-   document.getElementById("playerXInfo").innerText=
-     (data.players.X||"") + " (X) : " + data.score.X;
-
-   document.getElementById("playerOInfo").innerText=
-     (data.players.O||"Waiting") + " (O) : " + data.score.O;
-
-   myTurn=data.turn===symbol;
-
-   if(data.winner){
-     document.getElementById("status").innerText=data.winner+" Wins!";
-   }else{
-     document.getElementById("status").innerText=
-       myTurn?"Your Turn":"Opponent Turn";
-   }
-
-   updateChat(data.chat);
- });
+let boardDiv=document.getElementById("board");
+boardDiv.innerHTML="";
+for(let i=0;i<9;i++){
+let cell=document.createElement("div");
+cell.className="cell";
+cell.onclick=()=>makeMove(i);
+boardDiv.appendChild(cell);
 }
 
+listenRoom();
+}
+
+/* Listen room changes */
+function listenRoom(){
+db.ref("rooms/"+roomId).on("value",snap=>{
+let data=snap.val();
+if(!data) return;
+
+document.getElementById("player1").innerText=data.player1+" (X)";
+document.getElementById("player2").innerText=data.player2+" (O)";
+currentTurn=data.turn;
+
+let cells=document.getElementsByClassName("cell");
+data.board.forEach((val,i)=>{
+cells[i].innerText=val;
+});
+});
+}
+
+/* Make move */
 function makeMove(i){
- if(!myTurn || board[i]!="") return;
+if(currentTurn!==symbol) return;
 
- board[i]=symbol;
+db.ref("rooms/"+roomId).once("value",snap=>{
+let data=snap.val();
+if(data.board[i]!="") return;
 
- let winner=checkWinner(board);
+data.board[i]=symbol;
+data.turn=(symbol=="X")?"O":"X";
 
- db.ref("rooms/"+roomId).update({
-   board:board,
-   turn:symbol==="X"?"O":"X",
-   winner:winner
- });
-
- if(winner){
-   db.ref("rooms/"+roomId+"/score/"+winner)
-     .transaction(score => (score||0)+1);
- }
+db.ref("rooms/"+roomId).update({
+board:data.board,
+turn:data.turn
+});
+});
 }
 
-function updateBoard(){
- document.querySelectorAll(".cell").forEach((c,i)=>{
-   c.innerText=board[i];
- });
-}
-
-function checkWinner(b){
- const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],
-              [1,4,7],[2,5,8],[0,4,8],[2,4,6]];
- for(let w of wins){
-  if(b[w[0]]&&b[w[0]]===b[w[1]]&&b[w[1]]===b[w[2]])
-   return b[w[0]];
- }
- return "";
-}
-
-function restartGame(){
- if(cooldown) return;
- cooldown=true;
-
- let sec=10;
- const btn=document.getElementById("restartBtn");
- btn.innerText="Cooldown 10s";
-
- let interval=setInterval(()=>{
-  sec--;
-  btn.innerText="Cooldown "+sec+"s";
-  if(sec<=0){
-    clearInterval(interval);
-    cooldown=false;
-    btn.innerText="Restart";
-  }
- },1000);
-
- db.ref("rooms/"+roomId).update({
-   board:["","","","","","","","",""],
-   winner:"",
-   turn:"X"
- });
-}
-
+/* Chat */
 function sendMessage(){
- const msg=document.getElementById("chatInput").value;
- if(!msg) return;
+let msg=document.getElementById("chatInput").value;
+if(!msg) return;
 
- db.ref("rooms/"+roomId+"/chat").push({
-   name:playerName,
-   text:msg
- });
-
- document.getElementById("chatInput").value="";
+db.ref("rooms/"+roomId+"/chat").push({
+name:playerName,
+text:msg
+});
+document.getElementById("chatInput").value="";
 }
 
-function updateChat(chat){
- const box=document.getElementById("messages");
- box.innerHTML="";
- if(!chat) return;
-
- for(let key in chat){
-   box.innerHTML+=`<p><b>${chat[key].name}:</b> ${chat[key].text}</p>`;
- }
- box.scrollTop=box.scrollHeight;
+db.ref("rooms").on("child_added",snap=>{
+let id=snap.key;
+db.ref("rooms/"+id+"/chat").on("child_added",m=>{
+if(id==roomId){
+let data=m.val();
+let div=document.createElement("div");
+div.innerText=data.name+": "+data.text;
+document.getElementById("messages").appendChild(div);
 }
+});
+});
 
+/* Leave */
 function leaveRoom(){
- if(confirm("Leave this room?")){
-   location.reload();
- }
+db.ref("rooms/"+roomId).remove();
+location.reload();
 }
 
 </script>
+
 </body>
 </html>
