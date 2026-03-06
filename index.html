@@ -4,115 +4,114 @@
 
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>XO Online Pro</title>
+<title>XO Online</title>
 
 <style>
 
-/* ===== GLOBAL ===== */
-
-*{
-box-sizing:border-box;
-font-family:Arial,Helvetica,sans-serif;
-}
+/* GLOBAL */
 
 body{
 margin:0;
-background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+font-family:Arial;
+background:linear-gradient(120deg,#0f2027,#203a43,#2c5364);
 color:white;
 height:100vh;
 overflow:hidden;
 }
 
-/* ===== BUTTONS ===== */
-
 button{
 border:none;
-padding:8px 14px;
-border-radius:10px;
-background:linear-gradient(45deg,#ff416c,#ff4b2b);
-color:white;
+padding:10px 16px;
+border-radius:8px;
 cursor:pointer;
+color:white;
+background:linear-gradient(45deg,#ff416c,#ff4b2b);
 }
 
 button:hover{
-opacity:0.85;
+opacity:0.9;
 }
-
-/* ===== INPUT ===== */
 
 input{
 padding:8px;
-border-radius:8px;
+border-radius:6px;
 border:none;
 outline:none;
 }
 
-/* ===== LOBBY ===== */
+/* LOBBY */
 
 #lobby{
+height:100vh;
 display:flex;
 flex-direction:column;
-height:100vh;
 }
 
-.lobbyHeader{
+.top{
 display:flex;
 justify-content:space-between;
-padding:10px;
+padding:12px;
 background:#00000066;
 }
 
-.lobbyMain{
+.nameBox{
+display:flex;
+gap:10px;
+}
+
+/* margin between name and room create */
+
+.roomCreate{
+margin-left:20px;
+display:flex;
+gap:10px;
+}
+
+.main{
 flex:1;
 display:flex;
 overflow:hidden;
 }
 
-/* PLAYERS */
-
-.playersPanel{
+.players{
 width:35%;
 background:#00000055;
 padding:10px;
 overflow:auto;
 }
 
-.playerItem{
+.player{
 display:flex;
 justify-content:space-between;
-background:#ffffff11;
-margin-bottom:6px;
 padding:6px;
+margin-bottom:6px;
+background:#ffffff11;
 border-radius:6px;
 }
 
-/* ROOMS */
-
-.roomsPanel{
+.rooms{
 flex:1;
 padding:10px;
 overflow:auto;
 }
 
-.roomItem{
+.room{
 display:flex;
 justify-content:space-between;
-background:#ffffff11;
-margin-bottom:6px;
 padding:6px;
+margin-bottom:6px;
+background:#ffffff11;
 border-radius:6px;
 }
 
-/* FOOTER */
-
-.lobbyFooter{
+.bottom{
 display:flex;
 justify-content:space-between;
-padding:10px;
+padding:12px;
 background:#00000066;
 }
 
-/* ===== GAME SCREEN ===== */
+/* GAME */
 
 #game{
 display:none;
@@ -120,7 +119,7 @@ flex-direction:column;
 height:100vh;
 }
 
-.gameHeader{
+.gameTop{
 display:flex;
 justify-content:space-between;
 padding:10px;
@@ -131,9 +130,9 @@ background:#00000066;
 text-align:center;
 }
 
-.turnIndicator{
-font-size:20px;
-margin:5px;
+.turn{
+font-size:18px;
+margin-top:5px;
 }
 
 /* BOARD */
@@ -142,37 +141,24 @@ margin:5px;
 flex:1;
 display:grid;
 grid-template-columns:repeat(3,1fr);
-gap:8px;
+gap:6px;
 padding:10px;
 }
 
 .cell{
 background:#ffffff22;
-border-radius:12px;
 display:flex;
 justify-content:center;
 align-items:center;
 font-size:40px;
+border-radius:10px;
 cursor:pointer;
-}
-
-/* WIN EFFECT */
-
-.win{
-background:#00ff88 !important;
-animation:flash 0.4s infinite;
-}
-
-@keyframes flash{
-0%{opacity:1}
-50%{opacity:0.3}
-100%{opacity:1}
 }
 
 /* CHAT */
 
 .chat{
-height:180px;
+height:160px;
 background:#00000066;
 display:flex;
 flex-direction:column;
@@ -182,125 +168,132 @@ flex-direction:column;
 flex:1;
 overflow:auto;
 padding:6px;
-font-size:14px;
 }
 
 .chatInput{
 display:flex;
 }
 
-.chatInput input{
-flex:1;
+/* WIN ANIMATION */
+
+#resultPopup{
+position:fixed;
+top:40%;
+left:50%;
+transform:translate(-50%,-50%);
+font-size:32px;
+background:black;
+padding:20px;
+border-radius:10px;
+display:none;
 }
 
 </style>
 
 </head>
+
 <body>
 
 
-<!-- ================= LOBBY ================= -->
+<!-- LOBBY -->
 
 <div id="lobby">
 
-<div class="lobbyHeader">
+<div class="top">
 
-<input id="nameInput" placeholder="Enter your name">
+<div class="nameBox">
 
-<div>
-
-<input id="roomNameInput" placeholder="Room name">
-<button id="createRoomBtn">Create Room</button>
+<input id="name" placeholder="Enter name">
+<button id="onlineBtn">Go Online</button>
 
 </div>
 
 </div>
 
 
-<div class="lobbyMain">
+<div class="main">
 
-<div class="playersPanel">
+<div class="players">
 
 <h3>Online Players</h3>
-<div id="playersList"></div>
+<div id="players"></div>
 
 </div>
 
 
-<div class="roomsPanel">
+<div class="rooms">
 
 <h3>Live Rooms</h3>
-<div id="roomsList"></div>
+<div id="rooms"></div>
 
 </div>
 
 </div>
 
 
-<div class="lobbyFooter">
+<div class="bottom">
 
 <div>
 
-<input id="roomCodeInput" placeholder="Join by code">
-<button id="joinCodeBtn">Join</button>
+<input id="joinCode" placeholder="Join room code">
+<button onclick="joinByCode()">Join Room</button>
+
+<br><br>
+
+<input id="roomName" placeholder="Room name">
+<button onclick="createRoom()">Create Room</button>
 
 </div>
 
-<span id="onlineCount">0 online</span>
+<span id="onlineCount"></span>
 
 </div>
 
 </div>
 
 
-<!-- ================= GAME ================= -->
+<!-- GAME -->
 
 <div id="game">
 
-<div class="gameHeader">
+<div class="gameTop">
 
 <div class="playerBox">
 
-<div id="p1Name">Player1</div>
-Score: <span id="p1Score">0</span>
+<div id="p1"></div>
+Score: <span id="s1">0</span>
 
 </div>
-
 
 <div>
 
-Room: <span id="roomCodeDisplay"></span>
-
+Room: <span id="roomId"></span>
 <br>
-
-<button id="restartBtn">Restart</button>
-<button id="leaveBtn">Leave</button>
+<button onclick="leaveRoom()">Leave</button>
 
 </div>
-
 
 <div class="playerBox">
 
-<div id="p2Name">Player2</div>
-Score: <span id="p2Score">0</span>
+<div id="p2"></div>
+Score: <span id="s2">0</span>
 
 </div>
 
 </div>
 
-<h2 class="turnIndicator" id="turnIndicator"></h2>
+<h2 id="turn"></h2>
 
 <div class="board" id="board"></div>
 
-
 <div class="chat">
 
-<div class="messages" id="chatMessages"></div>
+<div class="messages" id="messages"></div>
 
 <div class="chatInput">
 
-<input id="chatInput">
-<button id="sendChatBtn">Send</button>
+<input id="msg">
+<button onclick="sendMsg()">Send</button>
 
 </div>
 
@@ -308,6 +301,8 @@ Score: <span id="p2Score">0</span>
 
 </div>
 
+
+<div id="resultPopup"></div>
 
 
 <script type="module">
@@ -315,112 +310,133 @@ Score: <span id="p2Score">0</span>
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getDatabase,ref,set,onValue,update,push,remove} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-
-/* ================= FIREBASE CONFIG ================= */
+/* FIREBASE CONFIG */
 
 const firebaseConfig={
-apiKey: "AIzaSyA-ZZDjD7gKPYQedUZiTLSBMMyY6oZJT7g",
-  authDomain: "xo-online-771de.firebaseapp.com",
-  databaseURL: "https://xo-online-771de-default-rtdb.firebaseio.com",
-  projectId: "xo-online-771de"
+  apiKey: "AIzaSyBs6mBAEN3ZhFfeA_Kd4UJlHUZNEp3TcYg",
+  authDomain: "tic-tac-rot.firebaseapp.com",
+  databaseURL: "https://tic-tac-rot-default-rtdb.firebaseio.com",
+  projectId: "tic-tac-rot"
 };
 
 const app=initializeApp(firebaseConfig);
 const db=getDatabase(app);
 
 
-/* ================= GLOBAL STATE ================= */
+/* GLOBAL */
 
 let playerId=Math.random().toString(36).slice(2);
-let currentRoom=null;
-let playerSymbol=null;
-
-let scores={
-X:0,
-O:0
-};
+let playerName="";
+let online=false;
+let roomId=null;
+let symbol=null;
+let scores={X:0,O:0};
 
 
-/* ================= ONLINE SYSTEM ================= */
+/* ONLINE BUTTON */
 
-function goOnline(){
+document.getElementById("onlineBtn").onclick=function(){
 
-const name=document.getElementById("nameInput").value || "Player";
+if(!online){
+
+playerName=document.getElementById("name").value || "Player";
 
 set(ref(db,"online/"+playerId),{
-name:name
+name:playerName,
+time:Date.now()
 });
+
+online=true;
+this.innerText="Go Offline";
+
+/* auto offline 1 min */
+
+setTimeout(()=>{
+goOffline();
+},60000);
+
+}else{
+
+goOffline();
 
 }
 
-setTimeout(goOnline,800);
+};
 
 
-/* ================= ONLINE PLAYERS ================= */
+/* GO OFFLINE */
+
+function goOffline(){
+
+remove(ref(db,"online/"+playerId));
+online=false;
+document.getElementById("onlineBtn").innerText="Go Online";
+
+}
+
+
+/* ONLINE PLAYERS */
 
 onValue(ref(db,"online"),snap=>{
 
-const data=snap.val()||{};
+let data=snap.val()||{};
 let html="";
 let count=0;
 
-for(const id in data){
+for(let id in data){
 
-const p=data[id];
+let p=data[id];
 if(!p || !p.name) continue;
 
 count++;
 
 html+=`
-<div class="playerItem">
+
+<div class="player">
+
 ${p.name}
-<button onclick="invitePlayer('${p.name}')">Invite</button>
+
+<button onclick="invite('${p.name}')">Invite</button>
+
 </div>
+
 `;
 
 }
 
-document.getElementById("playersList").innerHTML=html;
+document.getElementById("players").innerHTML=html;
 document.getElementById("onlineCount").innerText=count+" online";
 
 });
 
 
-/* ================= INVITE ================= */
-
-window.invitePlayer=function(name){
+window.invite=function(name){
 
 alert("Share room code with "+name);
 
 };
 
 
-/* ================= CREATE ROOM ================= */
+/* CREATE ROOM */
 
-document.getElementById("createRoomBtn").onclick=function(){
+window.createRoom=function(){
 
-const roomName=document.getElementById("roomNameInput").value.trim();
-const playerName=document.getElementById("nameInput").value.trim();
+let rName=document.getElementById("roomName").value;
 
-if(!roomName){
-alert("Room name required");
-return;
-}
+if(!rName) return alert("Room name required");
 
-const roomId=Math.random().toString(36).slice(2,7);
+roomId=Math.random().toString(36).slice(2,7);
+
+symbol="X";
 
 set(ref(db,"rooms/"+roomId),{
 
-name:roomName,
-
+name:rName,
 player1:playerId,
 player1name:playerName,
-
 player2:null,
 player2name:null,
-
 board:["","","","","","","","",""],
-
 turn:"X"
 
 });
@@ -430,17 +446,16 @@ enterRoom(roomId);
 };
 
 
-/* ================= ROOMS LIST ================= */
+/* ROOM LIST */
 
 onValue(ref(db,"rooms"),snap=>{
 
-const rooms=snap.val()||{};
+let data=snap.val()||{};
 let html="";
 
-for(const id in rooms){
+for(let id in data){
 
-const r=rooms[id];
-
+let r=data[id];
 if(!r || !r.name) continue;
 
 let players=1;
@@ -448,7 +463,7 @@ if(r.player2) players=2;
 
 html+=`
 
-<div class="roomItem">
+<div class="room">
 
 ${r.name} (${players}/2)
 
@@ -460,47 +475,43 @@ ${r.name} (${players}/2)
 
 }
 
-document.getElementById("roomsList").innerHTML=html;
+document.getElementById("rooms").innerHTML=html;
 
 });
 
 
 window.joinRoom=function(id){
 
-const playerName=document.getElementById("nameInput").value;
+symbol="O";
 
 update(ref(db,"rooms/"+id),{
-
 player2:playerId,
 player2name:playerName
-
 });
 
 enterRoom(id);
 
 };
 
+window.joinByCode=function(){
 
-/* ================= JOIN BY CODE ================= */
-
-document.getElementById("joinCodeBtn").onclick=function(){
-
-const code=document.getElementById("roomCodeInput").value;
-joinRoom(code);
+joinRoom(document.getElementById("joinCode").value);
 
 };
 
 
-/* ================= ENTER ROOM ================= */
+/* ENTER ROOM */
 
 function enterRoom(id){
 
-currentRoom=id;
+roomId=id;
 
 document.getElementById("lobby").style.display="none";
 document.getElementById("game").style.display="flex";
 
-document.getElementById("roomCodeDisplay").innerText=id;
+document.getElementById("roomId").innerText=id;
+
+createBoard();
 
 listenRoom();
 listenChat();
@@ -508,42 +519,15 @@ listenChat();
 }
 
 
-/* ================= LISTEN ROOM ================= */
+/* BOARD */
 
-function listenRoom(){
-
-onValue(ref(db,"rooms/"+currentRoom),snap=>{
-
-const room=snap.val();
-if(!room) return;
-
-document.getElementById("p1Name").innerText=room.player1name;
-document.getElementById("p2Name").innerText=room.player2name||"Waiting";
-
-playerSymbol=(room.player1==playerId)?"X":"O";
-
-drawBoard(room.board);
-
-document.getElementById("turnIndicator").innerText="Turn: "+room.turn;
-
-});
-
-}
-
-
-/* ================= DRAW BOARD ================= */
-
-function drawBoard(board){
+function createBoard(){
 
 let html="";
 
 for(let i=0;i<9;i++){
 
-html+=`
-<div class="cell" onclick="makeMove(${i})">
-${board[i]}
-</div>
-`;
+html+=`<div class="cell" onclick="move(${i})"></div>`;
 
 }
 
@@ -552,72 +536,124 @@ document.getElementById("board").innerHTML=html;
 }
 
 
-/* ================= MOVE ================= */
+/* LISTEN ROOM */
 
-window.makeMove=function(i){
+function listenRoom(){
 
-const roomRef=ref(db,"rooms/"+currentRoom);
+onValue(ref(db,"rooms/"+roomId),snap=>{
 
-onValue(roomRef,snap=>{
+let r=snap.val();
+if(!r) return;
 
-const room=snap.val();
-if(!room) return;
+document.getElementById("p1").innerText=r.player1name;
+document.getElementById("p2").innerText=r.player2name||"Waiting";
 
-if(room.board[i]!="") return;
-if(room.turn!=playerSymbol) return;
+document.getElementById("turn").innerText="Turn: "+r.turn;
 
-room.board[i]=playerSymbol;
+let cells=document.getElementsByClassName("cell");
 
-room.turn=(playerSymbol=="X")?"O":"X";
-
-update(roomRef,{
-board:room.board,
-turn:room.turn
+r.board.forEach((v,i)=>{
+cells[i].innerText=v;
 });
 
-checkWin(room.board);
+checkWinner(r.board,r);
+
+});
+
+}
+
+
+/* MOVE */
+
+window.move=function(i){
+
+onValue(ref(db,"rooms/"+roomId),snap=>{
+
+let r=snap.val();
+if(!r) return;
+
+if(r.board[i]!=""||r.turn!=symbol) return;
+
+r.board[i]=symbol;
+r.turn=(symbol=="X")?"O":"X";
+
+update(ref(db,"rooms/"+roomId),{
+board:r.board,
+turn:r.turn
+});
 
 },{onlyOnce:true});
 
 };
 
 
-/* ================= WIN CHECK ================= */
+/* WIN */
 
-function checkWin(b){
+function checkWinner(board,r){
 
-const winPatterns=[
+const wins=[
 [0,1,2],[3,4,5],[6,7,8],
 [0,3,6],[1,4,7],[2,5,8],
 [0,4,8],[2,4,6]
 ];
 
-for(const p of winPatterns){
+for(let w of wins){
 
-if(b[p[0]] && b[p[0]]==b[p[1]] && b[p[1]]==b[p[2]]){
+let[a,b,c]=w;
 
-winner(b[p[0]]);
+if(board[a]&&board[a]==board[b]&&board[a]==board[c]){
+
+winner(board[a],r);
 return;
 
 }
 
 }
 
+if(board.every(x=>x!="")){
+showResult("Draw");
+}
+
 }
 
 
-/* ================= WINNER ================= */
+/* RESULT */
 
-function winner(sym){
+function winner(sym,r){
+
+let name=sym=="X"?r.player1name:r.player2name;
 
 scores[sym]++;
 
-document.getElementById("p1Score").innerText=scores["X"];
-document.getElementById("p2Score").innerText=scores["O"];
+document.getElementById("s1").innerText=scores.X;
+document.getElementById("s2").innerText=scores.O;
 
-alert(sym+" wins!");
+showResult(name+" Wins!");
 
-update(ref(db,"rooms/"+currentRoom),{
+}
+
+
+function showResult(text){
+
+let box=document.getElementById("resultPopup");
+
+box.innerText=text;
+box.style.display="block";
+
+let count=3;
+
+let interval=setInterval(()=>{
+
+box.innerText=text+" | Restart in "+count;
+
+count--;
+
+if(count<0){
+
+clearInterval(interval);
+box.style.display="none";
+
+update(ref(db,"rooms/"+roomId),{
 
 board:["","","","","","","","",""],
 turn:"X"
@@ -626,69 +662,54 @@ turn:"X"
 
 }
 
+},1000);
 
-/* ================= CHAT ================= */
+}
+
+
+/* CHAT */
 
 function listenChat(){
 
-onValue(ref(db,"chat/"+currentRoom),snap=>{
+onValue(ref(db,"chat/"+roomId),snap=>{
 
-const data=snap.val()||{};
+let data=snap.val()||{};
 let html="";
 
-for(const id in data){
+for(let id in data){
 
-const m=data[id];
-if(!m || !m.msg) continue;
+let m=data[id];
+if(!m||!m.msg) continue;
 
 html+=`<div><b>${m.name}</b>: ${m.msg}</div>`;
 
 }
 
-document.getElementById("chatMessages").innerHTML=html;
+document.getElementById("messages").innerHTML=html;
 
 });
 
 }
 
+window.sendMsg=function(){
 
-document.getElementById("sendChatBtn").onclick=function(){
-
-const text=document.getElementById("chatInput").value;
-
-push(ref(db,"chat/"+currentRoom),{
-
-name:document.getElementById("nameInput").value,
-msg:text
-
+push(ref(db,"chat/"+roomId),{
+name:playerName,
+msg:document.getElementById("msg").value
 });
 
-document.getElementById("chatInput").value="";
+document.getElementById("msg").value="";
 
 };
 
 
-/* ================= RESTART ================= */
+/* LEAVE */
 
-document.getElementById("restartBtn").onclick=function(){
-
-update(ref(db,"rooms/"+currentRoom),{
-
-board:["","","","","","","","",""],
-turn:"X"
-
-});
-
-};
-
-
-/* ================= LEAVE ================= */
-
-document.getElementById("leaveBtn").onclick=function(){
+window.leaveRoom=function(){
 
 if(confirm("Leave room?")){
 
-remove(ref(db,"rooms/"+currentRoom));
+remove(ref(db,"rooms/"+roomId));
 location.reload();
 
 }
