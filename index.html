@@ -1,296 +1,699 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
 <title>XO Online Pro</title>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
 <style>
+
+/* ===== GLOBAL ===== */
+
+*{
+box-sizing:border-box;
+font-family:Arial,Helvetica,sans-serif;
+}
+
 body{
 margin:0;
-font-family:sans-serif;
-background:linear-gradient(135deg,#1f1c2c,#928dab);
+background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
 color:white;
-text-align:center;
+height:100vh;
+overflow:hidden;
 }
 
-/* Top bar */
-.topBar{
-display:flex;
-justify-content:space-between;
-padding:10px;
-background:linear-gradient(90deg,#ff512f,#dd2476);
-}
-
-/* Board */
-.board{
-display:grid;
-grid-template-columns:repeat(3,100px);
-gap:8px;
-justify-content:center;
-margin:20px auto;
-}
-
-.cell{
-width:100px;
-height:100px;
-display:flex;
-justify-content:center;
-align-items:center;
-font-size:40px;
-cursor:pointer;
-border-radius:12px;
-background:linear-gradient(145deg,#232526,#414345);
-}
+/* ===== BUTTONS ===== */
 
 button{
-padding:8px 15px;
-margin:5px;
 border:none;
-border-radius:8px;
+padding:8px 14px;
+border-radius:10px;
 background:linear-gradient(45deg,#ff416c,#ff4b2b);
 color:white;
 cursor:pointer;
 }
 
-#roomsList{
-position:fixed;
-bottom:0;
-width:100%;
-background:#111;
-max-height:150px;
+button:hover{
+opacity:0.85;
+}
+
+/* ===== INPUT ===== */
+
+input{
+padding:8px;
+border-radius:8px;
+border:none;
+outline:none;
+}
+
+/* ===== LOBBY ===== */
+
+#lobby{
+display:flex;
+flex-direction:column;
+height:100vh;
+}
+
+.lobbyHeader{
+display:flex;
+justify-content:space-between;
+padding:10px;
+background:#00000066;
+}
+
+.lobbyMain{
+flex:1;
+display:flex;
+overflow:hidden;
+}
+
+/* PLAYERS */
+
+.playersPanel{
+width:35%;
+background:#00000055;
+padding:10px;
 overflow:auto;
-padding:5px;
+}
+
+.playerItem{
+display:flex;
+justify-content:space-between;
+background:#ffffff11;
+margin-bottom:6px;
+padding:6px;
+border-radius:6px;
+}
+
+/* ROOMS */
+
+.roomsPanel{
+flex:1;
+padding:10px;
+overflow:auto;
 }
 
 .roomItem{
 display:flex;
 justify-content:space-between;
-padding:5px;
-margin:3px 0;
-background:#333;
+background:#ffffff11;
+margin-bottom:6px;
+padding:6px;
 border-radius:6px;
 }
 
-#messages{
-height:100px;
+/* FOOTER */
+
+.lobbyFooter{
+display:flex;
+justify-content:space-between;
+padding:10px;
+background:#00000066;
+}
+
+/* ===== GAME SCREEN ===== */
+
+#game{
+display:none;
+flex-direction:column;
+height:100vh;
+}
+
+.gameHeader{
+display:flex;
+justify-content:space-between;
+padding:10px;
+background:#00000066;
+}
+
+.playerBox{
+text-align:center;
+}
+
+.turnIndicator{
+font-size:20px;
+margin:5px;
+}
+
+/* BOARD */
+
+.board{
+flex:1;
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:8px;
+padding:10px;
+}
+
+.cell{
+background:#ffffff22;
+border-radius:12px;
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:40px;
+cursor:pointer;
+}
+
+/* WIN EFFECT */
+
+.win{
+background:#00ff88 !important;
+animation:flash 0.4s infinite;
+}
+
+@keyframes flash{
+0%{opacity:1}
+50%{opacity:0.3}
+100%{opacity:1}
+}
+
+/* CHAT */
+
+.chat{
+height:180px;
+background:#00000066;
+display:flex;
+flex-direction:column;
+}
+
+.messages{
+flex:1;
 overflow:auto;
-background:#222;
-margin:10px;
-padding:5px;
-border-radius:6px;
-text-align:left;
+padding:6px;
+font-size:14px;
 }
-</style>
-</head>
 
+.chatInput{
+display:flex;
+}
+
+.chatInput input{
+flex:1;
+}
+
+</style>
+
+</head>
 <body>
 
-<!-- FIRST SCREEN -->
+
+<!-- ================= LOBBY ================= -->
+
 <div id="lobby">
 
-<div class="topBar">
+<div class="lobbyHeader">
+
+<input id="nameInput" placeholder="Enter your name">
+
 <div>
-Enter Name:
-<input id="playerName">
-</div>
-<div>
-Live Players: <span id="liveCount">0</span>
-</div>
+
+<input id="roomNameInput" placeholder="Room name">
+<button id="createRoomBtn">Create Room</button>
+
 </div>
 
-<h2>XO Online</h2>
+</div>
 
-<button onclick="createRoom()">Create Room</button>
 
+<div class="lobbyMain">
+
+<div class="playersPanel">
+
+<h3>Online Players</h3>
+<div id="playersList"></div>
+
+</div>
+
+
+<div class="roomsPanel">
+
+<h3>Live Rooms</h3>
 <div id="roomsList"></div>
 
 </div>
 
-<!-- GAME SCREEN -->
-<div id="game" style="display:none">
-
-<div class="topBar">
-<div id="player1"></div>
-<div>Room: <span id="roomIdDisplay"></span></div>
-<div id="player2"></div>
 </div>
 
-<div id="board" class="board"></div>
 
-<h3 id="status"></h3>
+<div class="lobbyFooter">
 
-<div id="messages"></div>
-<input id="chatInput">
-<button onclick="sendMessage()">Send</button>
+<div>
+
+<input id="roomCodeInput" placeholder="Join by code">
+<button id="joinCodeBtn">Join</button>
+
+</div>
+
+<span id="onlineCount">0 online</span>
+
+</div>
+
+</div>
+
+
+<!-- ================= GAME ================= -->
+
+<div id="game">
+
+<div class="gameHeader">
+
+<div class="playerBox">
+
+<div id="p1Name">Player1</div>
+Score: <span id="p1Score">0</span>
+
+</div>
+
+
+<div>
+
+Room: <span id="roomCodeDisplay"></span>
 
 <br>
-<button onclick="leaveRoom()">Leave</button>
+
+<button id="restartBtn">Restart</button>
+<button id="leaveBtn">Leave</button>
 
 </div>
 
-<script>
 
-/* 🔥 PASTE YOUR FIREBASE CONFIG HERE */
-var firebaseConfig = {
-  apiKey: "AIzaSyA-ZZDjD7gKPYQedUZiTLSBMMyY6oZJT7g",
+<div class="playerBox">
+
+<div id="p2Name">Player2</div>
+Score: <span id="p2Score">0</span>
+
+</div>
+
+</div>
+
+<h2 class="turnIndicator" id="turnIndicator"></h2>
+
+<div class="board" id="board"></div>
+
+
+<div class="chat">
+
+<div class="messages" id="chatMessages"></div>
+
+<div class="chatInput">
+
+<input id="chatInput">
+<button id="sendChatBtn">Send</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<script type="module">
+
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getDatabase,ref,set,onValue,update,push,remove} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
+/* ================= FIREBASE CONFIG ================= */
+
+const firebaseConfig={
+apiKey: "AIzaSyA-ZZDjD7gKPYQedUZiTLSBMMyY6oZJT7g",
   authDomain: "xo-online-771de.firebaseapp.com",
   databaseURL: "https://xo-online-771de-default-rtdb.firebaseio.com",
-  projectId: "xo-online-771de",
-  storageBucket: "xo-online-771de.firebasestorage.app",
-  messagingSenderId: "100258209174",
-  appId: "1:100258209174:web:540c143efd3502dfad91b7"
+  projectId: "xo-online-771de"
 };
 
-firebase.initializeApp(firebaseConfig);
-var db = firebase.database();
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
 
-let playerName="";
-let roomId="";
-let symbol="";
-let currentTurn="X";
 
-/* Track live players */
-let userRef = db.ref("onlineUsers").push();
-userRef.set(true);
-userRef.onDisconnect().remove();
+/* ================= GLOBAL STATE ================= */
 
-db.ref("onlineUsers").on("value",snap=>{
-document.getElementById("liveCount").innerText=snap.numChildren();
+let playerId=Math.random().toString(36).slice(2);
+let currentRoom=null;
+let playerSymbol=null;
+
+let scores={
+X:0,
+O:0
+};
+
+
+/* ================= ONLINE SYSTEM ================= */
+
+function goOnline(){
+
+const name=document.getElementById("nameInput").value || "Player";
+
+set(ref(db,"online/"+playerId),{
+name:name
 });
 
-/* Create Room */
-function createRoom(){
-playerName=document.getElementById("playerName").value;
-if(!playerName) return alert("Enter name");
-
-roomId="room_"+Math.floor(Math.random()*100000);
-symbol="X";
-
-db.ref("rooms/"+roomId).set({
-player1:playerName,
-player2:"",
-board:["","","","","","","","",""],
-turn:"X"
-});
-
-openGame();
 }
 
-/* Show live rooms */
-db.ref("rooms").on("value",snap=>{
-let list=document.getElementById("roomsList");
-list.innerHTML="";
-snap.forEach(room=>{
-let data=room.val();
-if(data.player2==""){
-let div=document.createElement("div");
-div.className="roomItem";
-div.innerHTML=`
-<span>${room.key}</span>
-<button onclick="joinRoom('${room.key}')">Join</button>
+setTimeout(goOnline,800);
+
+
+/* ================= ONLINE PLAYERS ================= */
+
+onValue(ref(db,"online"),snap=>{
+
+const data=snap.val()||{};
+let html="";
+let count=0;
+
+for(const id in data){
+
+const p=data[id];
+if(!p || !p.name) continue;
+
+count++;
+
+html+=`
+<div class="playerItem">
+${p.name}
+<button onclick="invitePlayer('${p.name}')">Invite</button>
+</div>
 `;
-list.appendChild(div);
-}
-});
-});
 
-/* Join Room */
-function joinRoom(id){
-playerName=document.getElementById("playerName").value;
-if(!playerName) return alert("Enter name");
-
-roomId=id;
-symbol="O";
-
-db.ref("rooms/"+roomId+"/player2").set(playerName);
-openGame();
 }
 
-/* Open Game */
-function openGame(){
+document.getElementById("playersList").innerHTML=html;
+document.getElementById("onlineCount").innerText=count+" online";
+
+});
+
+
+/* ================= INVITE ================= */
+
+window.invitePlayer=function(name){
+
+alert("Share room code with "+name);
+
+};
+
+
+/* ================= CREATE ROOM ================= */
+
+document.getElementById("createRoomBtn").onclick=function(){
+
+const roomName=document.getElementById("roomNameInput").value.trim();
+const playerName=document.getElementById("nameInput").value.trim();
+
+if(!roomName){
+alert("Room name required");
+return;
+}
+
+const roomId=Math.random().toString(36).slice(2,7);
+
+set(ref(db,"rooms/"+roomId),{
+
+name:roomName,
+
+player1:playerId,
+player1name:playerName,
+
+player2:null,
+player2name:null,
+
+board:["","","","","","","","",""],
+
+turn:"X"
+
+});
+
+enterRoom(roomId);
+
+};
+
+
+/* ================= ROOMS LIST ================= */
+
+onValue(ref(db,"rooms"),snap=>{
+
+const rooms=snap.val()||{};
+let html="";
+
+for(const id in rooms){
+
+const r=rooms[id];
+
+if(!r || !r.name) continue;
+
+let players=1;
+if(r.player2) players=2;
+
+html+=`
+
+<div class="roomItem">
+
+${r.name} (${players}/2)
+
+<button onclick="joinRoom('${id}')">Join</button>
+
+</div>
+
+`;
+
+}
+
+document.getElementById("roomsList").innerHTML=html;
+
+});
+
+
+window.joinRoom=function(id){
+
+const playerName=document.getElementById("nameInput").value;
+
+update(ref(db,"rooms/"+id),{
+
+player2:playerId,
+player2name:playerName
+
+});
+
+enterRoom(id);
+
+};
+
+
+/* ================= JOIN BY CODE ================= */
+
+document.getElementById("joinCodeBtn").onclick=function(){
+
+const code=document.getElementById("roomCodeInput").value;
+joinRoom(code);
+
+};
+
+
+/* ================= ENTER ROOM ================= */
+
+function enterRoom(id){
+
+currentRoom=id;
+
 document.getElementById("lobby").style.display="none";
-document.getElementById("game").style.display="block";
-document.getElementById("roomIdDisplay").innerText=roomId;
+document.getElementById("game").style.display="flex";
 
-let boardDiv=document.getElementById("board");
-boardDiv.innerHTML="";
-for(let i=0;i<9;i++){
-let cell=document.createElement("div");
-cell.className="cell";
-cell.onclick=()=>makeMove(i);
-boardDiv.appendChild(cell);
-}
+document.getElementById("roomCodeDisplay").innerText=id;
 
 listenRoom();
+listenChat();
+
 }
 
-/* Listen room changes */
+
+/* ================= LISTEN ROOM ================= */
+
 function listenRoom(){
-db.ref("rooms/"+roomId).on("value",snap=>{
-let data=snap.val();
-if(!data) return;
 
-document.getElementById("player1").innerText=data.player1+" (X)";
-document.getElementById("player2").innerText=data.player2+" (O)";
-currentTurn=data.turn;
+onValue(ref(db,"rooms/"+currentRoom),snap=>{
 
-let cells=document.getElementsByClassName("cell");
-data.board.forEach((val,i)=>{
-cells[i].innerText=val;
+const room=snap.val();
+if(!room) return;
+
+document.getElementById("p1Name").innerText=room.player1name;
+document.getElementById("p2Name").innerText=room.player2name||"Waiting";
+
+playerSymbol=(room.player1==playerId)?"X":"O";
+
+drawBoard(room.board);
+
+document.getElementById("turnIndicator").innerText="Turn: "+room.turn;
+
 });
-});
+
 }
 
-/* Make move */
-function makeMove(i){
-if(currentTurn!==symbol) return;
 
-db.ref("rooms/"+roomId).once("value",snap=>{
-let data=snap.val();
-if(data.board[i]!="") return;
+/* ================= DRAW BOARD ================= */
 
-data.board[i]=symbol;
-data.turn=(symbol=="X")?"O":"X";
+function drawBoard(board){
 
-db.ref("rooms/"+roomId).update({
-board:data.board,
-turn:data.turn
-});
-});
+let html="";
+
+for(let i=0;i<9;i++){
+
+html+=`
+<div class="cell" onclick="makeMove(${i})">
+${board[i]}
+</div>
+`;
+
 }
 
-/* Chat */
-function sendMessage(){
-let msg=document.getElementById("chatInput").value;
-if(!msg) return;
+document.getElementById("board").innerHTML=html;
 
-db.ref("rooms/"+roomId+"/chat").push({
-name:playerName,
-text:msg
+}
+
+
+/* ================= MOVE ================= */
+
+window.makeMove=function(i){
+
+const roomRef=ref(db,"rooms/"+currentRoom);
+
+onValue(roomRef,snap=>{
+
+const room=snap.val();
+if(!room) return;
+
+if(room.board[i]!="") return;
+if(room.turn!=playerSymbol) return;
+
+room.board[i]=playerSymbol;
+
+room.turn=(playerSymbol=="X")?"O":"X";
+
+update(roomRef,{
+board:room.board,
+turn:room.turn
 });
+
+checkWin(room.board);
+
+},{onlyOnce:true});
+
+};
+
+
+/* ================= WIN CHECK ================= */
+
+function checkWin(b){
+
+const winPatterns=[
+[0,1,2],[3,4,5],[6,7,8],
+[0,3,6],[1,4,7],[2,5,8],
+[0,4,8],[2,4,6]
+];
+
+for(const p of winPatterns){
+
+if(b[p[0]] && b[p[0]]==b[p[1]] && b[p[1]]==b[p[2]]){
+
+winner(b[p[0]]);
+return;
+
+}
+
+}
+
+}
+
+
+/* ================= WINNER ================= */
+
+function winner(sym){
+
+scores[sym]++;
+
+document.getElementById("p1Score").innerText=scores["X"];
+document.getElementById("p2Score").innerText=scores["O"];
+
+alert(sym+" wins!");
+
+update(ref(db,"rooms/"+currentRoom),{
+
+board:["","","","","","","","",""],
+turn:"X"
+
+});
+
+}
+
+
+/* ================= CHAT ================= */
+
+function listenChat(){
+
+onValue(ref(db,"chat/"+currentRoom),snap=>{
+
+const data=snap.val()||{};
+let html="";
+
+for(const id in data){
+
+const m=data[id];
+if(!m || !m.msg) continue;
+
+html+=`<div><b>${m.name}</b>: ${m.msg}</div>`;
+
+}
+
+document.getElementById("chatMessages").innerHTML=html;
+
+});
+
+}
+
+
+document.getElementById("sendChatBtn").onclick=function(){
+
+const text=document.getElementById("chatInput").value;
+
+push(ref(db,"chat/"+currentRoom),{
+
+name:document.getElementById("nameInput").value,
+msg:text
+
+});
+
 document.getElementById("chatInput").value="";
-}
 
-db.ref("rooms").on("child_added",snap=>{
-let id=snap.key;
-db.ref("rooms/"+id+"/chat").on("child_added",m=>{
-if(id==roomId){
-let data=m.val();
-let div=document.createElement("div");
-div.innerText=data.name+": "+data.text;
-document.getElementById("messages").appendChild(div);
-}
-});
+};
+
+
+/* ================= RESTART ================= */
+
+document.getElementById("restartBtn").onclick=function(){
+
+update(ref(db,"rooms/"+currentRoom),{
+
+board:["","","","","","","","",""],
+turn:"X"
+
 });
 
-/* Leave */
-function leaveRoom(){
-db.ref("rooms/"+roomId).remove();
+};
+
+
+/* ================= LEAVE ================= */
+
+document.getElementById("leaveBtn").onclick=function(){
+
+if(confirm("Leave room?")){
+
+remove(ref(db,"rooms/"+currentRoom));
 location.reload();
+
 }
+
+};
 
 </script>
 
