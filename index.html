@@ -1,720 +1,590 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<title>XO Online Multiplayer</title>
 
-<title>XO Online</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <style>
 
-/* GLOBAL */
-
 body{
 margin:0;
-font-family:Arial;
-background:linear-gradient(120deg,#0f2027,#203a43,#2c5364);
+font-family:sans-serif;
 color:white;
-height:100vh;
-overflow:hidden;
+text-align:center;
+background:linear-gradient(135deg,#141e30,#243b55);
+min-height:100vh;
 }
 
+/* buttons */
+
 button{
+padding:10px 15px;
 border:none;
-padding:10px 16px;
 border-radius:8px;
 cursor:pointer;
+margin:5px;
 color:white;
+font-weight:bold;
 background:linear-gradient(45deg,#ff416c,#ff4b2b);
 }
 
 button:hover{
-opacity:0.9;
+transform:scale(1.05);
 }
+
+/* inputs */
 
 input{
 padding:8px;
-border-radius:6px;
+border-radius:8px;
 border:none;
-outline:none;
+margin:5px;
 }
 
-/* LOBBY */
+/* top bar */
 
-#lobby{
-height:100vh;
-display:flex;
-flex-direction:column;
-}
-
-.top{
+#topBar{
 display:flex;
 justify-content:space-between;
-padding:12px;
-background:#00000066;
-}
-
-.nameBox{
-display:flex;
-gap:10px;
-}
-
-/* margin between name and room create */
-
-.roomCreate{
-margin-left:20px;
-display:flex;
-gap:10px;
-}
-
-.main{
-flex:1;
-display:flex;
-overflow:hidden;
-}
-
-.players{
-width:35%;
-background:#00000055;
 padding:10px;
+background:linear-gradient(90deg,#ff9966,#ff5e62);
+}
+
+/* lists */
+
+.listBox{
+background:rgba(0,0,0,0.3);
+padding:10px;
+border-radius:10px;
+max-height:200px;
 overflow:auto;
+margin:10px;
 }
 
-.player{
-display:flex;
-justify-content:space-between;
-padding:6px;
-margin-bottom:6px;
-background:#ffffff11;
-border-radius:6px;
-}
-
-.rooms{
-flex:1;
-padding:10px;
-overflow:auto;
-}
-
-.room{
-display:flex;
-justify-content:space-between;
-padding:6px;
-margin-bottom:6px;
-background:#ffffff11;
-border-radius:6px;
-}
-
-.bottom{
-display:flex;
-justify-content:space-between;
-padding:12px;
-background:#00000066;
-}
-
-/* GAME */
-
-#game{
-display:none;
-flex-direction:column;
-height:100vh;
-}
-
-.gameTop{
-display:flex;
-justify-content:space-between;
-padding:10px;
-background:#00000066;
-}
-
-.playerBox{
-text-align:center;
-}
-
-.turn{
-font-size:18px;
-margin-top:5px;
-}
-
-/* BOARD */
+/* board */
 
 .board{
-flex:1;
 display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:6px;
-padding:10px;
+grid-template-columns:repeat(3,100px);
+gap:10px;
+justify-content:center;
+margin-top:30px;
 }
 
 .cell{
-background:#ffffff22;
-display:flex;
-justify-content:center;
-align-items:center;
+width:100px;
+height:100px;
 font-size:40px;
+display:flex;
+align-items:center;
+justify-content:center;
+background:linear-gradient(145deg,#232526,#414345);
 border-radius:10px;
 cursor:pointer;
 }
 
-/* CHAT */
+/* chat */
 
-.chat{
-height:160px;
-background:#00000066;
-display:flex;
-flex-direction:column;
-}
-
-.messages{
-flex:1;
+#messages{
+height:120px;
 overflow:auto;
-padding:6px;
-}
-
-.chatInput{
-display:flex;
-}
-
-/* WIN ANIMATION */
-
-#resultPopup{
-position:fixed;
-top:40%;
-left:50%;
-transform:translate(-50%,-50%);
-font-size:32px;
 background:black;
-padding:20px;
-border-radius:10px;
-display:none;
+padding:5px;
+margin-bottom:5px;
+}
+
+#winnerAnim{
+font-size:22px;
+margin-top:10px;
+color:yellow;
 }
 
 </style>
-
 </head>
 
 <body>
 
+<!-- HOME SCREEN -->
 
-<!-- LOBBY -->
+<div id="home">
 
-<div id="lobby">
+<div id="topBar">
 
-<div class="top">
+<div>
+<input id="nameInput" placeholder="Enter name">
+<button onclick="setName()">Save</button>
+</div>
 
-<div class="nameBox">
-
-<input id="name" placeholder="Enter name">
-<button id="onlineBtn">Go Online</button>
-
+<div>
+<button id="onlineBtn" onclick="toggleOnline()">Go Online</button>
 </div>
 
 </div>
 
-
-<div class="main">
-
-<div class="players">
-
-<h3>Online Players</h3>
-<div id="players"></div>
-
-</div>
-
-
-<div class="rooms">
-
-<h3>Live Rooms</h3>
-<div id="rooms"></div>
-
-</div>
-
-</div>
-
-
-<div class="bottom">
+<h2>XO Online Lobby</h2>
 
 <div>
 
-<input id="joinCode" placeholder="Join room code">
-<button onclick="joinByCode()">Join Room</button>
+<input id="joinCode" placeholder="Room code">
+<button onclick="joinRoom()">Join Room</button>
 
-<br><br>
+<br>
 
 <input id="roomName" placeholder="Room name">
 <button onclick="createRoom()">Create Room</button>
 
 </div>
 
-<span id="onlineCount"></span>
+<h3>Online Players</h3>
+<div id="playersList" class="listBox"></div>
+
+<h3>Friend Requests</h3>
+<div id="requestList" class="listBox"></div>
+
+<h3>Friends</h3>
+<div id="friendsList" class="listBox"></div>
+
+<h3>Live Rooms</h3>
+<div id="roomsList" class="listBox"></div>
 
 </div>
 
-</div>
+<!-- GAME SCREEN -->
 
+<div id="game" style="display:none">
 
-<!-- GAME -->
+<div id="topBar">
 
-<div id="game">
-
-<div class="gameTop">
-
-<div class="playerBox">
-
-<div id="p1"></div>
-Score: <span id="s1">0</span>
-
+<div>
+<span id="p1Name"></span>
+Score: <span id="p1Score">0</span>
 </div>
 
 <div>
-
-Room: <span id="roomId"></span>
-<br>
 <button onclick="leaveRoom()">Leave</button>
-
 </div>
 
-<div class="playerBox">
-
-<div id="p2"></div>
-Score: <span id="s2">0</span>
-
+<div>
+<span id="p2Name"></span>
+Score: <span id="p2Score">0</span>
 </div>
 
 </div>
 
-<h2 id="turn"></h2>
+<h3 id="turnLabel">Turn</h3>
 
-<div class="board" id="board"></div>
+<div class="board">
 
-<div class="chat">
+<div class="cell" onclick="move(0)"></div>
+<div class="cell" onclick="move(1)"></div>
+<div class="cell" onclick="move(2)"></div>
 
-<div class="messages" id="messages"></div>
+<div class="cell" onclick="move(3)"></div>
+<div class="cell" onclick="move(4)"></div>
+<div class="cell" onclick="move(5)"></div>
 
-<div class="chatInput">
+<div class="cell" onclick="move(6)"></div>
+<div class="cell" onclick="move(7)"></div>
+<div class="cell" onclick="move(8)"></div>
 
-<input id="msg">
+</div>
+
+<div id="winnerAnim"></div>
+
+<h3>Chat</h3>
+
+<div id="messages"></div>
+
+<input id="chatInput" placeholder="message">
 <button onclick="sendMsg()">Send</button>
 
 </div>
 
-</div>
-
-</div>
-
-
-<div id="resultPopup"></div>
-
-
-<script type="module">
-
-import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getDatabase,ref,set,onValue,update,push,remove} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+<script>
 
 /* FIREBASE CONFIG */
 
-const firebaseConfig={
+var firebaseConfig={
   apiKey: "AIzaSyBs6mBAEN3ZhFfeA_Kd4UJlHUZNEp3TcYg",
   authDomain: "tic-tac-rot.firebaseapp.com",
   databaseURL: "https://tic-tac-rot-default-rtdb.firebaseio.com",
   projectId: "tic-tac-rot"
-};
+}
 
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
+firebase.initializeApp(firebaseConfig)
 
+var db=firebase.database()
 
-/* GLOBAL */
+/* PLAYER */
 
-let playerId=Math.random().toString(36).slice(2);
-let playerName="";
-let online=false;
-let roomId=null;
-let symbol=null;
-let scores={X:0,O:0};
+var playerId="p"+Math.random().toString(36).substr(2,9)
+var playerName=""
+var roomId=null
+var turn="X"
 
+/* SET NAME */
 
-/* ONLINE BUTTON */
+function setName(){
 
-document.getElementById("onlineBtn").onclick=function(){
+playerName=document.getElementById("nameInput").value
 
-if(!online){
+}
 
-playerName=document.getElementById("name").value || "Player";
+/* ONLINE SYSTEM */
 
-set(ref(db,"online/"+playerId),{
-name:playerName,
-time:Date.now()
-});
+function toggleOnline(){
 
-online=true;
-this.innerText="Go Offline";
+var btn=document.getElementById("onlineBtn")
 
-/* auto offline 1 min */
+if(btn.innerText=="Go Online"){
 
-setTimeout(()=>{
-goOffline();
-},60000);
+db.ref("players/"+playerId).set({
+name:playerName
+})
+
+btn.innerText="Go Offline"
+
+listenPlayers()
+listenRequests()
+listenFriends()
 
 }else{
 
-goOffline();
+db.ref("players/"+playerId).remove()
+
+btn.innerText="Go Online"
 
 }
 
-};
-
-
-/* GO OFFLINE */
-
-function goOffline(){
-
-remove(ref(db,"online/"+playerId));
-online=false;
-document.getElementById("onlineBtn").innerText="Go Online";
-
 }
-
 
 /* ONLINE PLAYERS */
 
-onValue(ref(db,"online"),snap=>{
+function listenPlayers(){
 
-let data=snap.val()||{};
-let html="";
-let count=0;
+db.ref("players").on("value",snap=>{
 
-for(let id in data){
+var data=snap.val()
+var html=""
 
-let p=data[id];
-if(!p || !p.name) continue;
+for(var id in data){
 
-count++;
+if(id!=playerId){
 
-html+=`
+html+="<div>"+data[id].name+
 
-<div class="player">
+"<button onclick='sendRequest(\""+id+"\")'>Add Friend</button>"+
 
-${p.name}
+"<button onclick='invite(\""+id+"\")'>Invite</button>"+
 
-<button onclick="invite('${p.name}')">Invite</button>
-
-</div>
-
-`;
+"</div>"
 
 }
 
-document.getElementById("players").innerHTML=html;
-document.getElementById("onlineCount").innerText=count+" online";
+}
 
-});
+document.getElementById("playersList").innerHTML=html
 
+})
 
-window.invite=function(name){
+}
 
-alert("Share room code with "+name);
+/* SEND FRIEND REQUEST */
 
-};
+function sendRequest(id){
 
+db.ref("requests/"+id+"/"+playerId).set("pending")
 
-/* CREATE ROOM */
+}
 
-window.createRoom=function(){
+/* LISTEN FRIEND REQUEST */
 
-let rName=document.getElementById("roomName").value;
+function listenRequests(){
 
-if(!rName) return alert("Room name required");
+db.ref("requests/"+playerId).on("value",snap=>{
 
-roomId=Math.random().toString(36).slice(2,7);
+var data=snap.val()
+var html=""
 
-symbol="X";
+for(var id in data){
 
-set(ref(db,"rooms/"+roomId),{
+html+="<div>"+id+
 
-name:rName,
-player1:playerId,
-player1name:playerName,
-player2:null,
-player2name:null,
+"<button onclick='acceptFriend(\""+id+"\")'>Accept</button>"+
+
+"<button onclick='rejectFriend(\""+id+"\")'>Reject</button>"+
+
+"</div>"
+
+}
+
+document.getElementById("requestList").innerHTML=html
+
+})
+
+}
+
+/* ACCEPT */
+
+function acceptFriend(id){
+
+db.ref("friends/"+playerId+"/"+id).set(true)
+db.ref("friends/"+id+"/"+playerId).set(true)
+
+db.ref("requests/"+playerId+"/"+id).remove()
+
+}
+
+/* REJECT */
+
+function rejectFriend(id){
+
+db.ref("requests/"+playerId+"/"+id).remove()
+
+}
+
+/* FRIEND LIST */
+
+function listenFriends(){
+
+db.ref("friends/"+playerId).on("value",snap=>{
+
+var data=snap.val()
+var html=""
+
+for(var id in data){
+
+html+="<div>"+id+
+"<button onclick='invite(\""+id+"\")'>Invite</button>"+
+"</div>"
+
+}
+
+document.getElementById("friendsList").innerHTML=html
+
+})
+
+}
+
+/* INVITE */
+
+function invite(id){
+
+alert("Invite sent!")
+
+}
+
+/* ROOMS */
+
+function createRoom(){
+
+var name=document.getElementById("roomName").value
+
+if(!name) return alert("Enter room name")
+
+roomId="r"+Math.random().toString(36).substr(2,6)
+
+db.ref("rooms/"+roomId).set({
+name:name,
+players:{X:playerName},
 board:["","","","","","","","",""],
 turn:"X"
+})
 
-});
+joinRoomById(roomId)
 
-enterRoom(roomId);
+}
 
-};
+/* JOIN */
 
+function joinRoom(){
+
+var code=document.getElementById("joinCode").value
+joinRoomById(code)
+
+}
+
+function joinRoomById(id){
+
+db.ref("rooms/"+id+"/players/O").once("value",snap=>{
+
+if(snap.exists()){
+alert("Room full")
+return
+}
+
+roomId=id
+
+db.ref("rooms/"+id+"/players/O").set(playerName)
+
+startGame()
+
+})
+
+}
 
 /* ROOM LIST */
 
-onValue(ref(db,"rooms"),snap=>{
+db.ref("rooms").on("value",snap=>{
 
-let data=snap.val()||{};
-let html="";
+var data=snap.val()
+var html=""
 
-for(let id in data){
+for(var r in data){
 
-let r=data[id];
-if(!r || !r.name) continue;
+var count=Object.keys(data[r].players).length
 
-let players=1;
-if(r.player2) players=2;
-
-html+=`
-
-<div class="room">
-
-${r.name} (${players}/2)
-
-<button onclick="joinRoom('${id}')">Join</button>
-
-</div>
-
-`;
+html+="<div>"+data[r].name+" ("+count+"/2)"+
+"<button onclick='joinRoomById(\""+r+"\")'>Join</button>"+
+"</div>"
 
 }
 
-document.getElementById("rooms").innerHTML=html;
+document.getElementById("roomsList").innerHTML=html
 
-});
+})
 
+/* GAME */
 
-window.joinRoom=function(id){
+function startGame(){
 
-symbol="O";
+document.getElementById("home").style.display="none"
+document.getElementById("game").style.display="block"
 
-update(ref(db,"rooms/"+id),{
-player2:playerId,
-player2name:playerName
-});
+db.ref("rooms/"+roomId).on("value",snap=>{
 
-enterRoom(id);
+var data=snap.val()
 
-};
+var board=data.board
 
-window.joinByCode=function(){
+var cells=document.getElementsByClassName("cell")
 
-joinRoom(document.getElementById("joinCode").value);
-
-};
-
-
-/* ENTER ROOM */
-
-function enterRoom(id){
-
-roomId=id;
-
-document.getElementById("lobby").style.display="none";
-document.getElementById("game").style.display="flex";
-
-document.getElementById("roomId").innerText=id;
-
-createBoard();
-
-listenRoom();
-listenChat();
-
+for(var i=0;i<9;i++){
+cells[i].innerText=board[i]
 }
 
+document.getElementById("p1Name").innerText=data.players.X
+document.getElementById("p2Name").innerText=data.players.O
 
-/* BOARD */
+turn=data.turn
 
-function createBoard(){
+document.getElementById("turnLabel").innerText="Turn : "+turn
 
-let html="";
+})
 
-for(let i=0;i<9;i++){
-
-html+=`<div class="cell" onclick="move(${i})"></div>`;
-
-}
-
-document.getElementById("board").innerHTML=html;
+listenChat()
 
 }
-
-
-/* LISTEN ROOM */
-
-function listenRoom(){
-
-onValue(ref(db,"rooms/"+roomId),snap=>{
-
-let r=snap.val();
-if(!r) return;
-
-document.getElementById("p1").innerText=r.player1name;
-document.getElementById("p2").innerText=r.player2name||"Waiting";
-
-document.getElementById("turn").innerText="Turn: "+r.turn;
-
-let cells=document.getElementsByClassName("cell");
-
-r.board.forEach((v,i)=>{
-cells[i].innerText=v;
-});
-
-checkWinner(r.board,r);
-
-});
-
-}
-
 
 /* MOVE */
 
-window.move=function(i){
+function move(i){
 
-onValue(ref(db,"rooms/"+roomId),snap=>{
+db.ref("rooms/"+roomId).once("value",snap=>{
 
-let r=snap.val();
-if(!r) return;
+var data=snap.val()
 
-if(r.board[i]!=""||r.turn!=symbol) return;
+if(data.board[i]!="") return
 
-r.board[i]=symbol;
-r.turn=(symbol=="X")?"O":"X";
+data.board[i]=turn
 
-update(ref(db,"rooms/"+roomId),{
-board:r.board,
-turn:r.turn
-});
+turn=(turn=="X")?"O":"X"
 
-},{onlyOnce:true});
+db.ref("rooms/"+roomId).update({
+board:data.board,
+turn:turn
+})
 
-};
+checkWinner(data.board)
 
+})
+
+}
 
 /* WIN */
 
-function checkWinner(board,r){
+function checkWinner(b){
 
-const wins=[
+var wins=[
 [0,1,2],[3,4,5],[6,7,8],
 [0,3,6],[1,4,7],[2,5,8],
 [0,4,8],[2,4,6]
-];
+]
 
-for(let w of wins){
+for(var w of wins){
 
-let[a,b,c]=w;
+if(b[w[0]] && b[w[0]]==b[w[1]] && b[w[1]]==b[w[2]]){
 
-if(board[a]&&board[a]==board[b]&&board[a]==board[c]){
-
-winner(board[a],r);
-return;
+showWinner(b[w[0]])
+return
 
 }
 
 }
 
-if(board.every(x=>x!="")){
-showResult("Draw");
-}
+if(!b.includes("")) showWinner("draw")
 
 }
 
+function showWinner(w){
 
-/* RESULT */
+var text=(w=="draw")?"Draw":w+" Wins!"
 
-function winner(sym,r){
+document.getElementById("winnerAnim").innerText=text
 
-let name=sym=="X"?r.player1name:r.player2name;
-
-scores[sym]++;
-
-document.getElementById("s1").innerText=scores.X;
-document.getElementById("s2").innerText=scores.O;
-
-showResult(name+" Wins!");
+setTimeout(resetBoard,3000)
 
 }
 
+function resetBoard(){
 
-function showResult(text){
-
-let box=document.getElementById("resultPopup");
-
-box.innerText=text;
-box.style.display="block";
-
-let count=3;
-
-let interval=setInterval(()=>{
-
-box.innerText=text+" | Restart in "+count;
-
-count--;
-
-if(count<0){
-
-clearInterval(interval);
-box.style.display="none";
-
-update(ref(db,"rooms/"+roomId),{
-
-board:["","","","","","","","",""],
-turn:"X"
-
-});
+db.ref("rooms/"+roomId+"/board").set(["","","","","","","","",""])
 
 }
-
-},1000);
-
-}
-
 
 /* CHAT */
 
+function sendMsg(){
+
+var msg=document.getElementById("chatInput").value
+
+db.ref("rooms/"+roomId+"/chat").push({
+name:playerName,
+msg:msg
+})
+
+document.getElementById("chatInput").value=""
+
+}
+
 function listenChat(){
 
-onValue(ref(db,"chat/"+roomId),snap=>{
+db.ref("rooms/"+roomId+"/chat").on("child_added",snap=>{
 
-let data=snap.val()||{};
-let html="";
+var d=snap.val()
 
-for(let id in data){
+var div=document.createElement("div")
 
-let m=data[id];
-if(!m||!m.msg) continue;
+div.innerText=d.name+": "+d.msg
 
-html+=`<div><b>${m.name}</b>: ${m.msg}</div>`;
+document.getElementById("messages").appendChild(div)
 
-}
-
-document.getElementById("messages").innerHTML=html;
-
-});
+})
 
 }
-
-window.sendMsg=function(){
-
-push(ref(db,"chat/"+roomId),{
-name:playerName,
-msg:document.getElementById("msg").value
-});
-
-document.getElementById("msg").value="";
-
-};
-
 
 /* LEAVE */
 
-window.leaveRoom=function(){
+function leaveRoom(){
 
-if(confirm("Leave room?")){
+if(!confirm("Leave room?")) return
 
-remove(ref(db,"rooms/"+roomId));
-location.reload();
+location.reload()
 
 }
-
-};
 
 </script>
 
