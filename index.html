@@ -21,6 +21,8 @@ height:100vh;
 overflow:hidden;
 }
 
+/* Buttons */
+
 button{
 padding:10px 15px;
 border:none;
@@ -38,7 +40,7 @@ border-radius:6px;
 margin:5px;
 }
 
-/* LOBBY */
+/* Lobby */
 
 #lobby{
 display:flex;
@@ -64,7 +66,7 @@ background:#ffffff11;
 border-radius:6px;
 }
 
-/* GAME */
+/* Game */
 
 #game{
 display:none;
@@ -97,13 +99,14 @@ align-items:center;
 cursor:pointer;
 }
 
-/* CHAT */
+/* Chat */
 
 #chat{
-height:170px;
-background:#00000077;
+height:200px;
+background:#00000088;
 display:flex;
 flex-direction:column;
+border-top:2px solid #ff416c;
 }
 
 #messages{
@@ -116,7 +119,9 @@ padding:10px;
 max-width:70%;
 padding:8px 12px;
 border-radius:12px;
-margin:5px;
+margin:6px;
+font-size:14px;
+animation:fade .3s ease;
 }
 
 .myMsg{
@@ -129,13 +134,32 @@ margin-right:auto;
 background:linear-gradient(45deg,#36d1dc,#5b86e5);
 }
 
+.chatHeader{
+font-size:12px;
+opacity:0.8;
+}
+
+.chatTime{
+font-size:10px;
+opacity:0.7;
+text-align:right;
+}
+
 .chatInput{
 display:flex;
 padding:6px;
+background:#00000055;
 }
 
 .chatInput input{
 flex:1;
+background:#ffffff22;
+color:white;
+}
+
+@keyframes fade{
+from{opacity:0;transform:translateY(10px)}
+to{opacity:1;transform:translateY(0)}
 }
 
 #resultPopup{
@@ -145,7 +169,7 @@ left:50%;
 transform:translate(-50%,-50%);
 background:black;
 padding:20px;
-font-size:30px;
+font-size:28px;
 border-radius:12px;
 display:none;
 }
@@ -154,8 +178,6 @@ display:none;
 </head>
 
 <body>
-
-<!-- LOBBY -->
 
 <div id="lobby">
 
@@ -177,8 +199,6 @@ display:none;
 <button onclick="joinRoom()">Join Room</button>
 
 </div>
-
-<!-- GAME -->
 
 <div id="game">
 
@@ -210,7 +230,7 @@ Score <span id="s2">0</span>
 <div id="messages"></div>
 
 <div class="chatInput">
-<input id="msg">
+<input id="msg" placeholder="Type message...">
 <button onclick="sendMsg()">Send</button>
 </div>
 
@@ -225,33 +245,42 @@ Score <span id="s2">0</span>
 /* FIREBASE CONFIG */
 
 var firebaseConfig={
-  apiKey: "AIzaSyDsZWTk-iDl6YXJ7LIOWgDEzOg8b4u41ZQ",
+apiKey: "AIzaSyDsZWTk-iDl6YXJ7LIOWgDEzOg8b4u41ZQ",
   authDomain: "xo11-936a9.firebaseapp.com",
   databaseURL: "https://xo11-936a9-default-rtdb.firebaseio.com",
   projectId: "xo11-936a9"
 }
 
 firebase.initializeApp(firebaseConfig)
-
 var db=firebase.database()
 
-/* PLAYER */
-
 var playerId="p"+Math.random().toString(36).substr(2,9)
-var playerName=""
+
+var playerName=localStorage.getItem("xo_name")||""
+
 var roomId=null
 var symbol=""
 
-var scoreX=0
-var scoreO=0
+if(playerName){
+document.getElementById("nameInput").value=playerName
+autoOnline()
+}
 
-/* SAVE NAME AND GO ONLINE */
+/* SAVE NAME */
 
 function saveName(){
 
 playerName=document.getElementById("nameInput").value
 
 localStorage.setItem("xo_name",playerName)
+
+autoOnline()
+
+}
+
+/* AUTO ONLINE */
+
+function autoOnline(){
 
 var ref=db.ref("online/"+playerId)
 
@@ -265,7 +294,7 @@ listenPlayers()
 
 }
 
-/* ONLINE PLAYERS */
+/* PLAYERS LIST */
 
 function listenPlayers(){
 
@@ -278,9 +307,7 @@ for(let id in data){
 
 if(id==playerId) continue
 
-html+=`
-<div class="listItem">${data[id].name}</div>
-`
+html+=`<div class="listItem">${data[id].name}</div>`
 
 }
 
@@ -290,7 +317,7 @@ document.getElementById("playersList").innerHTML=html
 
 }
 
-/* ROOM LISTENER */
+/* ROOM LIST */
 
 db.ref("rooms").on("value",snap=>{
 
@@ -304,14 +331,10 @@ let r=data[id]
 
 if(!r) continue
 
-/* remove empty rooms */
-
 if(!r.player1 && !r.player2){
 db.ref("rooms/"+id).remove()
 continue
 }
-
-/* remove old rooms */
 
 if(r.created && now-r.created>300000){
 db.ref("rooms/"+id).remove()
@@ -328,8 +351,7 @@ html+=`
 <div class="listItem">
 <div>
 ${r.name} (${count}/2)
-<br>
-<small>${time}</small>
+<br><small>${time}</small>
 </div>
 <button onclick="joinRoomById('${id}')">Join</button>
 </div>
@@ -346,7 +368,6 @@ document.getElementById("roomsList").innerHTML=html
 function createRoom(){
 
 let name=document.getElementById("roomName").value
-if(!name) return
 
 let id="r"+Math.random().toString(36).substr(2,6)
 
@@ -368,10 +389,8 @@ startGame(id,"X")
 /* JOIN ROOM */
 
 function joinRoom(){
-
 let id=document.getElementById("joinCode").value
 joinRoomById(id)
-
 }
 
 function joinRoomById(id){
@@ -379,8 +398,7 @@ function joinRoomById(id){
 db.ref("rooms/"+id).once("value",snap=>{
 
 let r=snap.val()
-if(!r)return
-
+if(!r) return
 if(r.player2) return alert("Room full")
 
 db.ref("rooms/"+id).update({
@@ -411,14 +429,13 @@ listenChat()
 
 }
 
-/* ROOM LISTENER */
+/* ROOM */
 
 function listenRoom(){
 
 db.ref("rooms/"+roomId).on("value",snap=>{
 
 let r=snap.val()
-if(!r)return
 
 document.getElementById("p1").innerText=r.player1name||"Player1"
 document.getElementById("p2").innerText=r.player2name||"Waiting"
@@ -453,8 +470,8 @@ db.ref("rooms/"+roomId).once("value",snap=>{
 
 let r=snap.val()
 
-if(r.turn!=symbol)return
-if(r.board[i]!="")return
+if(r.turn!=symbol) return
+if(r.board[i]!="") return
 
 r.board[i]=symbol
 r.turn=(symbol=="X")?"O":"X"
@@ -521,7 +538,8 @@ let msg=document.getElementById("msg").value
 
 db.ref("rooms/"+roomId+"/chat").push({
 name:playerName,
-msg:msg
+msg:msg,
+time:Date.now()
 })
 
 document.getElementById("msg").value=""
@@ -538,11 +556,18 @@ let div=document.createElement("div")
 
 div.className="chatMsg "+(d.name==playerName?"myMsg":"otherMsg")
 
-div.innerHTML="<b>"+d.name+"</b><br>"+d.msg
+let time=new Date(d.time).toLocaleTimeString()
+
+div.innerHTML=`
+<div class="chatHeader">${d.name}</div>
+${d.msg}
+<div class="chatTime">${time}</div>
+`
 
 let box=document.getElementById("messages")
 
 box.appendChild(div)
+
 box.scrollTop=box.scrollHeight
 
 })
