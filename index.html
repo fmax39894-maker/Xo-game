@@ -3,7 +3,6 @@
 <head>
 
 <meta name="viewport" content="width=device-width,initial-scale=1">
-
 <title>XO Online</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -20,8 +19,6 @@ text-align:center;
 height:100vh;
 overflow:hidden;
 }
-
-/* Buttons */
 
 button{
 padding:10px 15px;
@@ -40,7 +37,7 @@ border-radius:6px;
 margin:5px;
 }
 
-/* Lobby */
+/* lobby */
 
 #lobby{
 display:flex;
@@ -66,7 +63,7 @@ background:#ffffff11;
 border-radius:6px;
 }
 
-/* Game */
+/* game */
 
 #game{
 display:none;
@@ -99,7 +96,7 @@ align-items:center;
 cursor:pointer;
 }
 
-/* Chat */
+/* chat */
 
 #chat{
 height:200px;
@@ -121,7 +118,6 @@ padding:8px 12px;
 border-radius:12px;
 margin:6px;
 font-size:14px;
-animation:fade .3s ease;
 }
 
 .myMsg{
@@ -157,10 +153,7 @@ background:#ffffff22;
 color:white;
 }
 
-@keyframes fade{
-from{opacity:0;transform:translateY(10px)}
-to{opacity:1;transform:translateY(0)}
-}
+/* result popup */
 
 #resultPopup{
 position:fixed;
@@ -205,7 +198,7 @@ display:none;
 <div class="gameTop">
 
 <div>
-<span id="p1"></span>
+<span id="p1"></span><br>
 Score <span id="s1">0</span>
 </div>
 
@@ -215,7 +208,7 @@ Room <span id="roomLabel"></span>
 </div>
 
 <div>
-<span id="p2"></span>
+<span id="p2"></span><br>
 Score <span id="s2">0</span>
 </div>
 
@@ -230,7 +223,7 @@ Score <span id="s2">0</span>
 <div id="messages"></div>
 
 <div class="chatInput">
-<input id="msg" placeholder="Type message...">
+<input id="msg" placeholder="Type message">
 <button onclick="sendMsg()">Send</button>
 </div>
 
@@ -254,19 +247,21 @@ apiKey: "AIzaSyDsZWTk-iDl6YXJ7LIOWgDEzOg8b4u41ZQ",
 firebase.initializeApp(firebaseConfig)
 var db=firebase.database()
 
+/* PLAYER */
+
 var playerId="p"+Math.random().toString(36).substr(2,9)
-
 var playerName=localStorage.getItem("xo_name")||""
-
 var roomId=null
 var symbol=""
+
+/* load saved name */
 
 if(playerName){
 document.getElementById("nameInput").value=playerName
 autoOnline()
 }
 
-/* SAVE NAME */
+/* save name */
 
 function saveName(){
 
@@ -278,15 +273,13 @@ autoOnline()
 
 }
 
-/* AUTO ONLINE */
+/* go online */
 
 function autoOnline(){
 
 var ref=db.ref("online/"+playerId)
 
-ref.set({
-name:playerName
-})
+ref.set({name:playerName})
 
 ref.onDisconnect().remove()
 
@@ -294,7 +287,7 @@ listenPlayers()
 
 }
 
-/* PLAYERS LIST */
+/* players list */
 
 function listenPlayers(){
 
@@ -317,7 +310,7 @@ document.getElementById("playersList").innerHTML=html
 
 }
 
-/* ROOM LIST */
+/* room list */
 
 db.ref("rooms").on("value",snap=>{
 
@@ -328,7 +321,6 @@ let now=Date.now()
 for(let id in data){
 
 let r=data[id]
-
 if(!r) continue
 
 if(!r.player1 && !r.player2){
@@ -336,23 +328,20 @@ db.ref("rooms/"+id).remove()
 continue
 }
 
-if(r.created && now-r.created>300000){
+if(now-r.created>300000){
 db.ref("rooms/"+id).remove()
 continue
 }
 
 let count=0
-if(r.player1) count++
-if(r.player2) count++
+if(r.player1)count++
+if(r.player2)count++
 
 let time=new Date(r.created).toLocaleTimeString()
 
 html+=`
 <div class="listItem">
-<div>
-${r.name} (${count}/2)
-<br><small>${time}</small>
-</div>
+<div>${r.name} (${count}/2)<br><small>${time}</small></div>
 <button onclick="joinRoomById('${id}')">Join</button>
 </div>
 `
@@ -363,11 +352,12 @@ document.getElementById("roomsList").innerHTML=html
 
 })
 
-/* CREATE ROOM */
+/* create room */
 
 function createRoom(){
 
 let name=document.getElementById("roomName").value
+if(!name)return
 
 let id="r"+Math.random().toString(36).substr(2,6)
 
@@ -378,6 +368,8 @@ player1:playerId,
 player1name:playerName,
 board:["","","","","","","","",""],
 turn:"X",
+scoreX:0,
+scoreO:0,
 created:Date.now()
 
 })
@@ -386,11 +378,13 @@ startGame(id,"X")
 
 }
 
-/* JOIN ROOM */
+/* join room */
 
 function joinRoom(){
+
 let id=document.getElementById("joinCode").value
 joinRoomById(id)
+
 }
 
 function joinRoomById(id){
@@ -398,8 +392,9 @@ function joinRoomById(id){
 db.ref("rooms/"+id).once("value",snap=>{
 
 let r=snap.val()
-if(!r) return
-if(r.player2) return alert("Room full")
+
+if(!r)return
+if(r.player2)return alert("Room full")
 
 db.ref("rooms/"+id).update({
 player2:playerId,
@@ -412,7 +407,7 @@ startGame(id,"O")
 
 }
 
-/* START GAME */
+/* start game */
 
 function startGame(id,sym){
 
@@ -429,7 +424,7 @@ listenChat()
 
 }
 
-/* ROOM */
+/* room listener */
 
 function listenRoom(){
 
@@ -440,6 +435,9 @@ let r=snap.val()
 document.getElementById("p1").innerText=r.player1name||"Player1"
 document.getElementById("p2").innerText=r.player2name||"Waiting"
 
+document.getElementById("s1").innerText=r.scoreX||0
+document.getElementById("s2").innerText=r.scoreO||0
+
 document.getElementById("turn").innerText="Turn : "+r.turn
 
 drawBoard(r.board)
@@ -448,21 +446,23 @@ drawBoard(r.board)
 
 }
 
-/* BOARD */
+/* board */
 
 function drawBoard(board){
 
 let html=""
 
 for(let i=0;i<9;i++){
+
 html+=`<div class="cell" onclick="move(${i})">${board[i]}</div>`
+
 }
 
 document.getElementById("board").innerHTML=html
 
 }
 
-/* MOVE */
+/* move */
 
 function move(i){
 
@@ -470,8 +470,8 @@ db.ref("rooms/"+roomId).once("value",snap=>{
 
 let r=snap.val()
 
-if(r.turn!=symbol) return
-if(r.board[i]!="") return
+if(r.turn!=symbol)return
+if(r.board[i]!="")return
 
 r.board[i]=symbol
 r.turn=(symbol=="X")?"O":"X"
@@ -481,15 +481,17 @@ board:r.board,
 turn:r.turn
 })
 
-checkWinner(r.board)
+checkWinner(r)
 
 })
 
 }
 
-/* WIN */
+/* win */
 
-function checkWinner(b){
+function checkWinner(r){
+
+let b=r.board
 
 let win=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]
 
@@ -498,6 +500,15 @@ for(let w of win){
 let[a,c,d]=w
 
 if(b[a] && b[a]==b[c] && b[a]==b[d]){
+
+if(b[a]=="X") r.scoreX++
+else r.scoreO++
+
+db.ref("rooms/"+roomId).update({
+scoreX:r.scoreX,
+scoreO:r.scoreO
+})
+
 showResult(b[a]+" Wins")
 return
 }
@@ -510,11 +521,13 @@ showResult("Draw")
 
 }
 
-function showResult(t){
+/* result */
+
+function showResult(text){
 
 let box=document.getElementById("resultPopup")
 
-box.innerText=t
+box.innerText=text
 box.style.display="block"
 
 setTimeout(()=>{
@@ -530,16 +543,19 @@ turn:"X"
 
 }
 
-/* CHAT */
+/* chat */
 
 function sendMsg(){
 
-let msg=document.getElementById("msg").value
+let msg=document.getElementById("msg").value.trim()
+if(!msg)return
 
 db.ref("rooms/"+roomId+"/chat").push({
+
 name:playerName,
 msg:msg,
 time:Date.now()
+
 })
 
 document.getElementById("msg").value=""
@@ -567,14 +583,13 @@ ${d.msg}
 let box=document.getElementById("messages")
 
 box.appendChild(div)
-
 box.scrollTop=box.scrollHeight
 
 })
 
 }
 
-/* LEAVE */
+/* leave */
 
 function leave(){
 
