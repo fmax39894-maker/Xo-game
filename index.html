@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>XO Online Multiplayer</title>
+
+<title>XO Online</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -11,95 +13,141 @@
 
 body{
 margin:0;
-font-family:sans-serif;
+font-family:Arial;
+background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
 color:white;
 text-align:center;
-background:linear-gradient(135deg,#141e30,#243b55);
-min-height:100vh;
+height:100vh;
+overflow:hidden;
 }
-
-/* buttons */
 
 button{
 padding:10px 15px;
 border:none;
 border-radius:8px;
 cursor:pointer;
-margin:5px;
-color:white;
-font-weight:bold;
 background:linear-gradient(45deg,#ff416c,#ff4b2b);
+color:white;
+margin:5px;
 }
-
-button:hover{
-transform:scale(1.05);
-}
-
-/* inputs */
 
 input{
 padding:8px;
-border-radius:8px;
 border:none;
+border-radius:6px;
 margin:5px;
 }
 
-/* top bar */
+/* LOBBY */
 
-#topBar{
+#lobby{
 display:flex;
-justify-content:space-between;
-padding:10px;
-background:linear-gradient(90deg,#ff9966,#ff5e62);
+flex-direction:column;
+height:100vh;
 }
 
-/* lists */
-
 .listBox{
-background:rgba(0,0,0,0.3);
+background:#00000055;
+margin:10px;
 padding:10px;
 border-radius:10px;
 max-height:200px;
 overflow:auto;
-margin:10px;
 }
 
-/* board */
+.listItem{
+display:flex;
+justify-content:space-between;
+padding:6px;
+margin-bottom:6px;
+background:#ffffff11;
+border-radius:6px;
+}
+
+/* GAME */
+
+#game{
+display:none;
+flex-direction:column;
+height:100vh;
+}
+
+.gameTop{
+display:flex;
+justify-content:space-between;
+padding:10px;
+background:#00000066;
+}
 
 .board{
+flex:1;
 display:grid;
-grid-template-columns:repeat(3,100px);
-gap:10px;
-justify-content:center;
-margin-top:30px;
+grid-template-columns:repeat(3,1fr);
+gap:8px;
+padding:15px;
 }
 
 .cell{
-width:100px;
-height:100px;
+background:#ffffff22;
+border-radius:10px;
 font-size:40px;
 display:flex;
-align-items:center;
 justify-content:center;
-background:linear-gradient(145deg,#232526,#414345);
-border-radius:10px;
+align-items:center;
 cursor:pointer;
 }
 
-/* chat */
+/* CHAT */
 
-#messages{
-height:120px;
-overflow:auto;
-background:black;
-padding:5px;
-margin-bottom:5px;
+#chat{
+height:170px;
+background:#00000077;
+display:flex;
+flex-direction:column;
 }
 
-#winnerAnim{
-font-size:22px;
-margin-top:10px;
-color:yellow;
+#messages{
+flex:1;
+overflow:auto;
+padding:10px;
+}
+
+.chatMsg{
+max-width:70%;
+padding:8px 12px;
+border-radius:12px;
+margin:5px;
+}
+
+.myMsg{
+margin-left:auto;
+background:linear-gradient(45deg,#ff416c,#ff4b2b);
+}
+
+.otherMsg{
+margin-right:auto;
+background:linear-gradient(45deg,#36d1dc,#5b86e5);
+}
+
+.chatInput{
+display:flex;
+padding:6px;
+}
+
+.chatInput input{
+flex:1;
+}
+
+#resultPopup{
+position:fixed;
+top:40%;
+left:50%;
+transform:translate(-50%,-50%);
+background:black;
+padding:20px;
+font-size:30px;
+border-radius:12px;
+display:none;
 }
 
 </style>
@@ -107,111 +155,80 @@ color:yellow;
 
 <body>
 
-<!-- HOME SCREEN -->
+<!-- LOBBY -->
 
-<div id="home">
+<div id="lobby">
 
-<div id="topBar">
+<h2>XO Online</h2>
 
-<div>
 <input id="nameInput" placeholder="Enter name">
-<button onclick="setName()">Save</button>
-</div>
-
-<div>
-<button id="onlineBtn" onclick="toggleOnline()">Go Online</button>
-</div>
-
-</div>
-
-<h2>XO Online Lobby</h2>
-
-<div>
-
-<input id="joinCode" placeholder="Room code">
-<button onclick="joinRoom()">Join Room</button>
-
-<br>
-
-<input id="roomName" placeholder="Room name">
-<button onclick="createRoom()">Create Room</button>
-
-</div>
+<button onclick="saveName()">Save Name</button>
 
 <h3>Online Players</h3>
 <div id="playersList" class="listBox"></div>
 
-<h3>Friend Requests</h3>
-<div id="requestList" class="listBox"></div>
-
-<h3>Friends</h3>
-<div id="friendsList" class="listBox"></div>
-
-<h3>Live Rooms</h3>
+<h3>Rooms</h3>
 <div id="roomsList" class="listBox"></div>
 
+<input id="roomName" placeholder="Room name">
+<button onclick="createRoom()">Create Room</button>
+
+<input id="joinCode" placeholder="Room code">
+<button onclick="joinRoom()">Join Room</button>
+
 </div>
 
-<!-- GAME SCREEN -->
+<!-- GAME -->
 
-<div id="game" style="display:none">
+<div id="game">
 
-<div id="topBar">
+<div class="gameTop">
 
 <div>
-<span id="p1Name"></span>
-Score: <span id="p1Score">0</span>
+<span id="p1"></span>
+Score <span id="s1">0</span>
 </div>
 
 <div>
-<button onclick="leaveRoom()">Leave</button>
+Room <span id="roomLabel"></span>
+<button onclick="leave()">Leave</button>
 </div>
 
 <div>
-<span id="p2Name"></span>
-Score: <span id="p2Score">0</span>
+<span id="p2"></span>
+Score <span id="s2">0</span>
 </div>
 
 </div>
 
-<h3 id="turnLabel">Turn</h3>
+<h2 id="turn"></h2>
 
-<div class="board">
+<div id="board" class="board"></div>
 
-<div class="cell" onclick="move(0)"></div>
-<div class="cell" onclick="move(1)"></div>
-<div class="cell" onclick="move(2)"></div>
-
-<div class="cell" onclick="move(3)"></div>
-<div class="cell" onclick="move(4)"></div>
-<div class="cell" onclick="move(5)"></div>
-
-<div class="cell" onclick="move(6)"></div>
-<div class="cell" onclick="move(7)"></div>
-<div class="cell" onclick="move(8)"></div>
-
-</div>
-
-<div id="winnerAnim"></div>
-
-<h3>Chat</h3>
+<div id="chat">
 
 <div id="messages"></div>
 
-<input id="chatInput" placeholder="message">
+<div class="chatInput">
+<input id="msg">
 <button onclick="sendMsg()">Send</button>
+</div>
 
 </div>
+
+</div>
+
+<div id="resultPopup"></div>
 
 <script>
 
 /* FIREBASE CONFIG */
 
 var firebaseConfig={
-  apiKey: "AIzaSyBs6mBAEN3ZhFfeA_Kd4UJlHUZNEp3TcYg",
-  authDomain: "tic-tac-rot.firebaseapp.com",
-  databaseURL: "https://tic-tac-rot-default-rtdb.firebaseio.com",
-  projectId: "tic-tac-rot"
+  apiKey: "AIzaSyDsZWTk-iDl6YXJ7LIOWgDEzOg8b4u41ZQ",
+  authDomain: "xo11-936a9.firebaseapp.com",
+  databaseURL: "https://xo11-936a9-default-rtdb.firebaseio.com",
+  projectId: "xo11-936a9"
 }
 
 firebase.initializeApp(firebaseConfig)
@@ -223,41 +240,28 @@ var db=firebase.database()
 var playerId="p"+Math.random().toString(36).substr(2,9)
 var playerName=""
 var roomId=null
-var turn="X"
+var symbol=""
 
-/* SET NAME */
+var scoreX=0
+var scoreO=0
 
-function setName(){
+/* SAVE NAME AND GO ONLINE */
+
+function saveName(){
 
 playerName=document.getElementById("nameInput").value
 
-}
+localStorage.setItem("xo_name",playerName)
 
-/* ONLINE SYSTEM */
+var ref=db.ref("online/"+playerId)
 
-function toggleOnline(){
-
-var btn=document.getElementById("onlineBtn")
-
-if(btn.innerText=="Go Online"){
-
-db.ref("players/"+playerId).set({
+ref.set({
 name:playerName
 })
 
-btn.innerText="Go Offline"
+ref.onDisconnect().remove()
 
 listenPlayers()
-listenRequests()
-listenFriends()
-
-}else{
-
-db.ref("players/"+playerId).remove()
-
-btn.innerText="Go Online"
-
-}
 
 }
 
@@ -265,24 +269,18 @@ btn.innerText="Go Online"
 
 function listenPlayers(){
 
-db.ref("players").on("value",snap=>{
+db.ref("online").on("value",snap=>{
 
-var data=snap.val()
-var html=""
+let data=snap.val()||{}
+let html=""
 
-for(var id in data){
+for(let id in data){
 
-if(id!=playerId){
+if(id==playerId) continue
 
-html+="<div>"+data[id].name+
-
-"<button onclick='sendRequest(\""+id+"\")'>Add Friend</button>"+
-
-"<button onclick='invite(\""+id+"\")'>Invite</button>"+
-
-"</div>"
-
-}
+html+=`
+<div class="listItem">${data[id].name}</div>
+`
 
 }
 
@@ -292,154 +290,50 @@ document.getElementById("playersList").innerHTML=html
 
 }
 
-/* SEND FRIEND REQUEST */
-
-function sendRequest(id){
-
-db.ref("requests/"+id+"/"+playerId).set("pending")
-
-}
-
-/* LISTEN FRIEND REQUEST */
-
-function listenRequests(){
-
-db.ref("requests/"+playerId).on("value",snap=>{
-
-var data=snap.val()
-var html=""
-
-for(var id in data){
-
-html+="<div>"+id+
-
-"<button onclick='acceptFriend(\""+id+"\")'>Accept</button>"+
-
-"<button onclick='rejectFriend(\""+id+"\")'>Reject</button>"+
-
-"</div>"
-
-}
-
-document.getElementById("requestList").innerHTML=html
-
-})
-
-}
-
-/* ACCEPT */
-
-function acceptFriend(id){
-
-db.ref("friends/"+playerId+"/"+id).set(true)
-db.ref("friends/"+id+"/"+playerId).set(true)
-
-db.ref("requests/"+playerId+"/"+id).remove()
-
-}
-
-/* REJECT */
-
-function rejectFriend(id){
-
-db.ref("requests/"+playerId+"/"+id).remove()
-
-}
-
-/* FRIEND LIST */
-
-function listenFriends(){
-
-db.ref("friends/"+playerId).on("value",snap=>{
-
-var data=snap.val()
-var html=""
-
-for(var id in data){
-
-html+="<div>"+id+
-"<button onclick='invite(\""+id+"\")'>Invite</button>"+
-"</div>"
-
-}
-
-document.getElementById("friendsList").innerHTML=html
-
-})
-
-}
-
-/* INVITE */
-
-function invite(id){
-
-alert("Invite sent!")
-
-}
-
-/* ROOMS */
-
-function createRoom(){
-
-var name=document.getElementById("roomName").value
-
-if(!name) return alert("Enter room name")
-
-roomId="r"+Math.random().toString(36).substr(2,6)
-
-db.ref("rooms/"+roomId).set({
-name:name,
-players:{X:playerName},
-board:["","","","","","","","",""],
-turn:"X"
-})
-
-joinRoomById(roomId)
-
-}
-
-/* JOIN */
-
-function joinRoom(){
-
-var code=document.getElementById("joinCode").value
-joinRoomById(code)
-
-}
-
-function joinRoomById(id){
-
-db.ref("rooms/"+id+"/players/O").once("value",snap=>{
-
-if(snap.exists()){
-alert("Room full")
-return
-}
-
-roomId=id
-
-db.ref("rooms/"+id+"/players/O").set(playerName)
-
-startGame()
-
-})
-
-}
-
-/* ROOM LIST */
+/* ROOM LISTENER */
 
 db.ref("rooms").on("value",snap=>{
 
-var data=snap.val()
-var html=""
+let data=snap.val()||{}
+let html=""
+let now=Date.now()
 
-for(var r in data){
+for(let id in data){
 
-var count=Object.keys(data[r].players).length
+let r=data[id]
 
-html+="<div>"+data[r].name+" ("+count+"/2)"+
-"<button onclick='joinRoomById(\""+r+"\")'>Join</button>"+
-"</div>"
+if(!r) continue
+
+/* remove empty rooms */
+
+if(!r.player1 && !r.player2){
+db.ref("rooms/"+id).remove()
+continue
+}
+
+/* remove old rooms */
+
+if(r.created && now-r.created>300000){
+db.ref("rooms/"+id).remove()
+continue
+}
+
+let count=0
+if(r.player1) count++
+if(r.player2) count++
+
+let time=new Date(r.created).toLocaleTimeString()
+
+html+=`
+<div class="listItem">
+<div>
+${r.name} (${count}/2)
+<br>
+<small>${time}</small>
+</div>
+<button onclick="joinRoomById('${id}')">Join</button>
+</div>
+`
 
 }
 
@@ -447,35 +341,107 @@ document.getElementById("roomsList").innerHTML=html
 
 })
 
-/* GAME */
+/* CREATE ROOM */
 
-function startGame(){
+function createRoom(){
 
-document.getElementById("home").style.display="none"
-document.getElementById("game").style.display="block"
+let name=document.getElementById("roomName").value
+if(!name) return
 
-db.ref("rooms/"+roomId).on("value",snap=>{
+let id="r"+Math.random().toString(36).substr(2,6)
 
-var data=snap.val()
+db.ref("rooms/"+id).set({
 
-var board=data.board
-
-var cells=document.getElementsByClassName("cell")
-
-for(var i=0;i<9;i++){
-cells[i].innerText=board[i]
-}
-
-document.getElementById("p1Name").innerText=data.players.X
-document.getElementById("p2Name").innerText=data.players.O
-
-turn=data.turn
-
-document.getElementById("turnLabel").innerText="Turn : "+turn
+name:name,
+player1:playerId,
+player1name:playerName,
+board:["","","","","","","","",""],
+turn:"X",
+created:Date.now()
 
 })
 
+startGame(id,"X")
+
+}
+
+/* JOIN ROOM */
+
+function joinRoom(){
+
+let id=document.getElementById("joinCode").value
+joinRoomById(id)
+
+}
+
+function joinRoomById(id){
+
+db.ref("rooms/"+id).once("value",snap=>{
+
+let r=snap.val()
+if(!r)return
+
+if(r.player2) return alert("Room full")
+
+db.ref("rooms/"+id).update({
+player2:playerId,
+player2name:playerName
+})
+
+startGame(id,"O")
+
+})
+
+}
+
+/* START GAME */
+
+function startGame(id,sym){
+
+roomId=id
+symbol=sym
+
+document.getElementById("lobby").style.display="none"
+document.getElementById("game").style.display="flex"
+
+document.getElementById("roomLabel").innerText=id
+
+listenRoom()
 listenChat()
+
+}
+
+/* ROOM LISTENER */
+
+function listenRoom(){
+
+db.ref("rooms/"+roomId).on("value",snap=>{
+
+let r=snap.val()
+if(!r)return
+
+document.getElementById("p1").innerText=r.player1name||"Player1"
+document.getElementById("p2").innerText=r.player2name||"Waiting"
+
+document.getElementById("turn").innerText="Turn : "+r.turn
+
+drawBoard(r.board)
+
+})
+
+}
+
+/* BOARD */
+
+function drawBoard(board){
+
+let html=""
+
+for(let i=0;i<9;i++){
+html+=`<div class="cell" onclick="move(${i})">${board[i]}</div>`
+}
+
+document.getElementById("board").innerHTML=html
 
 }
 
@@ -485,20 +451,20 @@ function move(i){
 
 db.ref("rooms/"+roomId).once("value",snap=>{
 
-var data=snap.val()
+let r=snap.val()
 
-if(data.board[i]!="") return
+if(r.turn!=symbol)return
+if(r.board[i]!="")return
 
-data.board[i]=turn
-
-turn=(turn=="X")?"O":"X"
+r.board[i]=symbol
+r.turn=(symbol=="X")?"O":"X"
 
 db.ref("rooms/"+roomId).update({
-board:data.board,
-turn:turn
+board:r.board,
+turn:r.turn
 })
 
-checkWinner(data.board)
+checkWinner(r.board)
 
 })
 
@@ -508,40 +474,42 @@ checkWinner(data.board)
 
 function checkWinner(b){
 
-var wins=[
-[0,1,2],[3,4,5],[6,7,8],
-[0,3,6],[1,4,7],[2,5,8],
-[0,4,8],[2,4,6]
-]
+let win=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]
 
-for(var w of wins){
+for(let w of win){
 
-if(b[w[0]] && b[w[0]]==b[w[1]] && b[w[1]]==b[w[2]]){
+let[a,c,d]=w
 
-showWinner(b[w[0]])
+if(b[a] && b[a]==b[c] && b[a]==b[d]){
+showResult(b[a]+" Wins")
 return
-
 }
 
 }
 
-if(!b.includes("")) showWinner("draw")
+if(!b.includes("")){
+showResult("Draw")
+}
 
 }
 
-function showWinner(w){
+function showResult(t){
 
-var text=(w=="draw")?"Draw":w+" Wins!"
+let box=document.getElementById("resultPopup")
 
-document.getElementById("winnerAnim").innerText=text
+box.innerText=t
+box.style.display="block"
 
-setTimeout(resetBoard,3000)
+setTimeout(()=>{
 
-}
+box.style.display="none"
 
-function resetBoard(){
+db.ref("rooms/"+roomId).update({
+board:["","","","","","","","",""],
+turn:"X"
+})
 
-db.ref("rooms/"+roomId+"/board").set(["","","","","","","","",""])
+},3000)
 
 }
 
@@ -549,14 +517,14 @@ db.ref("rooms/"+roomId+"/board").set(["","","","","","","","",""])
 
 function sendMsg(){
 
-var msg=document.getElementById("chatInput").value
+let msg=document.getElementById("msg").value
 
 db.ref("rooms/"+roomId+"/chat").push({
 name:playerName,
 msg:msg
 })
 
-document.getElementById("chatInput").value=""
+document.getElementById("msg").value=""
 
 }
 
@@ -564,13 +532,18 @@ function listenChat(){
 
 db.ref("rooms/"+roomId+"/chat").on("child_added",snap=>{
 
-var d=snap.val()
+let d=snap.val()
 
-var div=document.createElement("div")
+let div=document.createElement("div")
 
-div.innerText=d.name+": "+d.msg
+div.className="chatMsg "+(d.name==playerName?"myMsg":"otherMsg")
 
-document.getElementById("messages").appendChild(div)
+div.innerHTML="<b>"+d.name+"</b><br>"+d.msg
+
+let box=document.getElementById("messages")
+
+box.appendChild(div)
+box.scrollTop=box.scrollHeight
 
 })
 
@@ -578,9 +551,18 @@ document.getElementById("messages").appendChild(div)
 
 /* LEAVE */
 
-function leaveRoom(){
+function leave(){
 
-if(!confirm("Leave room?")) return
+db.ref("rooms/"+roomId).once("value",snap=>{
+
+let r=snap.val()
+
+if(r.player1==playerId) r.player1=null
+if(r.player2==playerId) r.player2=null
+
+db.ref("rooms/"+roomId).update(r)
+
+})
 
 location.reload()
 
