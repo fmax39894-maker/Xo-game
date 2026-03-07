@@ -10,161 +10,171 @@
 
 <style>
 
-body{
+*{
 margin:0;
-font-family:Arial;
-background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-color:white;
-text-align:center;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
 height:100vh;
-overflow:hidden;
-}
-
-button{
-padding:10px 15px;
-border:none;
-border-radius:8px;
-cursor:pointer;
-background:linear-gradient(45deg,#ff416c,#ff4b2b);
-color:white;
-margin:5px;
-}
-
-input{
-padding:8px;
-border:none;
-border-radius:6px;
-margin:5px;
-}
-
-/* lobby */
-
-#lobby{
-display:flex;
-flex-direction:column;
-height:100vh;
-}
-
-.listBox{
-background:#00000055;
-margin:10px;
-padding:10px;
-border-radius:10px;
-max-height:200px;
-overflow:auto;
-}
-
-.listItem{
-display:flex;
-justify-content:space-between;
-padding:6px;
-margin-bottom:6px;
-background:#ffffff11;
-border-radius:6px;
-}
-
-/* game */
-
-#game{
-display:none;
-flex-direction:column;
-height:100vh;
-}
-
-.gameTop{
-display:flex;
-justify-content:space-between;
-padding:10px;
-background:#00000066;
-}
-
-.board{
-flex:1;
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:8px;
-padding:15px;
-}
-
-.cell{
-background:#ffffff22;
-border-radius:10px;
-font-size:40px;
 display:flex;
 justify-content:center;
 align-items:center;
+background:linear-gradient(135deg,#4facfe,#00f2fe,#667eea);
+overflow:hidden;
+}
+
+/* MAIN CONTAINER */
+
+.container{
+width:100%;
+max-width:900px;
+
+/* reduced screen height */
+height:calc(100vh - 40px);
+
+transform:scale(0.95);
+
+background:rgba(255,255,255,0.1);
+backdrop-filter:blur(10px);
+
+border-radius:20px;
+padding:20px;
+
+display:flex;
+flex-direction:column;
+justify-content:space-between;
+}
+
+/* TITLE */
+
+.title{
+font-size:32px;
+font-weight:bold;
+color:white;
+text-align:center;
+margin-bottom:10px;
+}
+
+/* INPUT */
+
+input{
+padding:12px;
+border-radius:10px;
+border:none;
+outline:none;
+font-size:16px;
+width:200px;
+}
+
+/* BUTTONS */
+
+button{
+padding:12px 18px;
+border:none;
+border-radius:12px;
+cursor:pointer;
+font-weight:bold;
+color:white;
+
+background:linear-gradient(45deg,#ff7e5f,#feb47b);
+
+transition:0.2s;
+}
+
+button:hover{
+transform:scale(1.05);
+}
+
+/* GAME BOARD */
+
+.board{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+margin-top:20px;
+}
+
+.cell{
+width:100%;
+height:90px;
+background:rgba(255,255,255,0.2);
+border-radius:12px;
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+font-size:40px;
+color:white;
 cursor:pointer;
 }
 
-/* chat */
+/* CHAT */
 
-#chat{
-height:200px;
-background:#00000088;
-display:flex;
-flex-direction:column;
-border-top:2px solid #ff416c;
-}
-
-#messages{
-flex:1;
+.chat{
+height:120px;
+background:rgba(255,255,255,0.15);
+border-radius:12px;
 overflow:auto;
 padding:10px;
-}
-
-.chatMsg{
-max-width:70%;
-padding:8px 12px;
-border-radius:12px;
-margin:6px;
-font-size:14px;
-}
-
-.myMsg{
-margin-left:auto;
-background:linear-gradient(45deg,#ff416c,#ff4b2b);
-}
-
-.otherMsg{
-margin-right:auto;
-background:linear-gradient(45deg,#36d1dc,#5b86e5);
-}
-
-.chatHeader{
-font-size:12px;
-opacity:0.8;
-}
-
-.chatTime{
-font-size:10px;
-opacity:0.7;
-text-align:right;
+color:white;
 }
 
 .chatInput{
 display:flex;
-padding:6px;
-background:#00000055;
+gap:10px;
+margin-top:10px;
 }
 
 .chatInput input{
 flex:1;
-background:#ffffff22;
+}
+
+/* SCORE */
+
+.score{
+display:flex;
+justify-content:space-between;
+color:white;
+font-size:18px;
+margin-top:10px;
+}
+
+/* WINNER ANIMATION */
+
+.winner{
+animation:winnerFlash 0.8s infinite alternate;
+}
+
+@keyframes winnerFlash{
+from{background:#00ff99;}
+to{background:#00ccff;}
+}
+
+/* ROOM LIST */
+
+.rooms{
+margin-top:10px;
+height:120px;
+overflow:auto;
+background:rgba(255,255,255,0.15);
+border-radius:12px;
+padding:10px;
 color:white;
 }
 
-/* result popup */
+/* ONLINE PLAYERS */
 
-#resultPopup{
-position:fixed;
-top:40%;
-left:50%;
-transform:translate(-50%,-50%);
-background:black;
-padding:20px;
-font-size:28px;
+.players{
+height:120px;
+overflow:auto;
+background:rgba(255,255,255,0.15);
 border-radius:12px;
-display:none;
+padding:10px;
+color:white;
 }
 
 </style>
