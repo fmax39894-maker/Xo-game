@@ -24,16 +24,42 @@ body {
 .btn {
   border: none;
   color: white;
-  padding: 8px 12px;
+  padding: 8px 14px;
   border-radius: 10px;
   cursor: pointer;
   font-weight: bold;
+  transition: 0.3s;
 }
 
+/* Button gradients */
 .add { background: linear-gradient(45deg,#36d1dc,#5b86e5); }
 .delete { background: linear-gradient(45deg,#ff416c,#ff4b2b); }
 .style { background: linear-gradient(45deg,#8e2de2,#4a00e0); }
 .view { background: linear-gradient(45deg,#11998e,#38ef7d); }
+
+/* Download animation */
+.download {
+  background: linear-gradient(45deg,#ff9a9e,#fad0c4);
+  position: relative;
+  overflow: hidden;
+}
+
+.download.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.download.loading::after {
+  content: "Saving...";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.4);
+  color: white;
+  font-size: 12px;
+}
 
 /* Board */
 #board {
@@ -68,7 +94,6 @@ body {
   outline: none;
 }
 
-/* Styles */
 .dotted { border-bottom: 1px dashed #999; }
 
 .heading {
@@ -79,7 +104,8 @@ body {
   padding: 10px 0;
 }
 
-/* Colors */
+.view-mode #toolbar { display: none; }
+
 #colors {
   display: flex;
   gap: 5px;
@@ -90,16 +116,6 @@ body {
   height: 20px;
   border-radius: 4px;
   cursor: pointer;
-}
-
-/* Hide toolbar in view mode */
-.view-mode #toolbar {
-  display: none;
-}
-
-/* Mobile */
-@media(max-width:600px){
-  .btn { padding:6px; font-size:12px; }
 }
 </style>
 </head>
@@ -117,33 +133,16 @@ body {
   <button class="btn style" onclick="toggleBold()">Bold</button>
   <button class="btn style" onclick="toggleDotted()">Line</button>
 
-  <button class="btn style" onclick="resizeRow()">Row Size</button>
-  <button class="btn style" onclick="resizeColumn()">Col Size</button>
-
   <button class="btn view" onclick="toggleView()">View</button>
-  <button class="btn view" onclick="downloadImage()">📸 Save</button>
 
-  <!-- Text Colors -->
+  <button id="downloadBtn" class="btn download" onclick="downloadImage()">📸 Download</button>
+
   <div id="colors">
     <div class="color-box" style="background:red" onclick="setColor('red')"></div>
     <div class="color-box" style="background:blue" onclick="setColor('blue')"></div>
     <div class="color-box" style="background:green" onclick="setColor('green')"></div>
     <div class="color-box" style="background:black" onclick="setColor('black')"></div>
-    <div class="color-box" style="background:purple" onclick="setColor('purple')"></div>
   </div>
-
-  <!-- Gradient BG -->
-  <select onchange="changeBG(this.value)">
-    <option>BG</option>
-    <option value="linear-gradient(135deg,#f3e5dc,#f8cdda)">Pink</option>
-    <option value="linear-gradient(135deg,#a1c4fd,#c2e9fb)">Blue</option>
-    <option value="linear-gradient(135deg,#fbc2eb,#a6c1ee)">Purple</option>
-  </select>
-
-  <!-- Custom Gradient -->
-  <input type="color" id="g1">
-  <input type="color" id="g2">
-  <button onclick="customGradient()">Apply Gradient</button>
 </div>
 
 <div id="board">
@@ -153,29 +152,9 @@ body {
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
 <script>
-let rows = 8;
-let cols = 4;
-let selected = null;
+let rows = 6, cols = 4, selected=null;
+const table=document.getElementById("table");
 
-const table = document.getElementById("table");
-
-/* Load saved */
-window.onload = () => {
-  let saved = localStorage.getItem("data");
-  if(saved){
-    table.innerHTML = saved;
-    attachEvents();
-  } else {
-    createGrid();
-  }
-};
-
-/* Save */
-function save(){
-  localStorage.setItem("data", table.innerHTML);
-}
-
-/* Create grid */
 function createGrid(){
   table.innerHTML="";
   table.style.gridTemplateColumns=`repeat(${cols},1fr)`;
@@ -192,112 +171,71 @@ function createGrid(){
     txt.contentEditable=true;
 
     txt.onclick=()=>selected=txt;
-    txt.oninput=save;
 
-    cell.appendChild(cb);
-    cell.appendChild(txt);
+    cell.append(cb,txt);
     table.appendChild(cell);
   }
 }
+createGrid();
 
-/* Reattach after load */
-function attachEvents(){
-  document.querySelectorAll(".text").forEach(t=>{
-    t.onclick=()=>selected=t;
-    t.oninput=save;
-  });
-}
+/* Basic */
+function addRow(){rows++;createGrid();}
+function addColumn(){cols++;createGrid();}
+function deleteRow(){if(confirm("Delete row?")){rows--;createGrid();}}
+function deleteColumn(){if(confirm("Delete column?")){cols--;createGrid();}}
 
-/* Add/Delete */
-function addRow(){ rows++; createGrid(); save();}
-function addColumn(){ cols++; createGrid(); save();}
-
-function deleteRow(){
-  if(confirm("Delete row?")){
-    if(rows>1) rows--;
-    createGrid(); save();
-  }
-}
-
-function deleteColumn(){
-  if(confirm("Delete column?")){
-    if(cols>1) cols--;
-    createGrid(); save();
-  }
-}
-
-/* Heading */
 function addHeading(){
   let h=document.createElement("div");
   h.className="heading";
   h.contentEditable=true;
   h.innerText="Heading";
   table.prepend(h);
-  save();
 }
 
-/* Style */
 function toggleBold(){
   if(selected){
     selected.style.fontWeight=
     selected.style.fontWeight==="bold"?"normal":"bold";
-    save();
   }
 }
 
 function toggleDotted(){
-  if(selected){
-    selected.classList.toggle("dotted");
-    save();
-  }
+  if(selected) selected.classList.toggle("dotted");
 }
 
-/* Resize */
-function resizeRow(){
-  let s=prompt("Row height px:");
-  document.querySelectorAll(".cell").forEach(c=>c.style.height=s+"px");
-  save();
-}
-
-function resizeColumn(){
-  let s=prompt("Column width px:");
-  table.style.gridTemplateColumns=`repeat(${cols},${s}px)`;
-  save();
-}
-
-/* Text Color */
 function setColor(c){
-  if(selected){
-    selected.style.color=c;
-    save();
-  }
+  if(selected) selected.style.color=c;
 }
 
-/* BG */
-function changeBG(val){
-  document.body.style.background=val;
-}
+/* 🔥 FIXED DOWNLOAD */
+function downloadImage(){
+  const btn=document.getElementById("downloadBtn");
+  btn.classList.add("loading");
 
-/* Custom gradient */
-function customGradient(){
-  let c1=document.getElementById("g1").value;
-  let c2=document.getElementById("g2").value;
-  document.body.style.background=`linear-gradient(135deg,${c1},${c2})`;
+  html2canvas(document.getElementById("board")).then(canvas=>{
+    
+    canvas.toBlob(function(blob){
+      const link=document.createElement("a");
+
+      const fileName = "Checklist_" + new Date().getTime() + ".png";
+
+      link.href=URL.createObjectURL(blob);
+      link.download=fileName;
+      link.click();
+
+      /* Mobile visibility fix */
+      setTimeout(()=>{
+        btn.classList.remove("loading");
+        alert("Saved! Check Downloads or Files app 📂");
+      },1000);
+
+    }, "image/png");
+  });
 }
 
 /* View */
 function toggleView(){
   document.body.classList.toggle("view-mode");
-}
-
-/* Download image */
-function downloadImage(){
-  html2canvas(document.getElementById("board")).then(canvas=>{
-    let link=document.createElement("a");
-    link.download="list.png";
-    link.href=canvas.toDataURL();
-    link.click();
-  });
 }
 </script>
 
