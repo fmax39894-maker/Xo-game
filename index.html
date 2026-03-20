@@ -1,312 +1,304 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Chat</title>
+<meta charset="UTF-8">
+<title>Checklist App Pro Max</title>
 
 <style>
-
-body{
-margin:0;
-font-family:sans-serif;
-background:#0f172a;
-color:white;
-display:flex;
-flex-direction:column;
-height:100vh;
+body {
+  margin: 0;
+  font-family: Arial;
+  background: linear-gradient(135deg,#f3e5dc,#f8cdda);
 }
 
-header{
-background:#1e293b;
-padding:10px;
-display:flex;
-justify-content:space-between;
-align-items:center;
+/* Toolbar */
+#toolbar {
+  padding: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
 }
 
-#nameBtn{
-background:#22c55e;
-border:none;
-padding:8px 15px;
-border-radius:20px;
-color:white;
-font-weight:bold;
+/* Buttons */
+.btn {
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
 }
 
-#chat{
-flex:1;
-overflow-y:auto;
-padding:10px;
+.add { background: linear-gradient(45deg,#36d1dc,#5b86e5); }
+.delete { background: linear-gradient(45deg,#ff416c,#ff4b2b); }
+.style { background: linear-gradient(45deg,#8e2de2,#4a00e0); }
+.view { background: linear-gradient(45deg,#11998e,#38ef7d); }
+
+/* Board */
+#board {
+  margin: 15px;
+  padding: 15px;
+  background: #ffffffcc;
+  border-radius: 20px;
 }
 
-.msg{
-background:#1e293b;
-padding:8px;
-margin:6px 0;
-border-radius:10px;
-max-width:75%;
-position:relative;
+/* Grid */
+#table {
+  display: grid;
+  gap: 10px;
 }
 
-.me{
-background:#2563eb;
-margin-left:auto;
+/* Cell */
+.cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.name{
-font-size:12px;
-opacity:.7;
+.cell input {
+  width: 18px;
+  height: 18px;
 }
 
-.delete{
-position:absolute;
-right:6px;
-top:6px;
-cursor:pointer;
+.text {
+  flex: 1;
+  border-bottom: 1px solid #999;
+  min-height: 20px;
+  outline: none;
 }
 
-.media{
-max-width:200px;
-margin-top:6px;
-border-radius:8px;
-cursor:pointer;
+/* Styles */
+.dotted { border-bottom: 1px dashed #999; }
+
+.heading {
+  grid-column: span 100%;
+  font-size: 22px;
+  font-weight: bold;
+  border-bottom: 3px solid black;
+  padding: 10px 0;
 }
 
-#sendBar{
-display:flex;
-padding:8px;
-background:#1e293b;
+/* Colors */
+#colors {
+  display: flex;
+  gap: 5px;
 }
 
-#msg{
-flex:1;
-padding:8px;
-border:none;
-border-radius:20px;
+.color-box {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
-button{
-margin-left:5px;
-border:none;
-padding:8px 12px;
-border-radius:20px;
-background:#22c55e;
-color:white;
+/* Hide toolbar in view mode */
+.view-mode #toolbar {
+  display: none;
 }
 
-#viewer{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:black;
-display:none;
-justify-content:center;
-align-items:center;
-flex-direction:column;
+/* Mobile */
+@media(max-width:600px){
+  .btn { padding:6px; font-size:12px; }
 }
-
 </style>
-
 </head>
 
 <body>
 
-<header>
-<h3>Live Chat</h3>
-<button id="nameBtn"></button>
-</header>
+<div id="toolbar">
+  <button class="btn add" onclick="addRow()">Add Row</button>
+  <button class="btn add" onclick="addColumn()">Add Column</button>
 
-<div id="chat"></div>
+  <button class="btn delete" onclick="deleteRow()">Delete Row</button>
+  <button class="btn delete" onclick="deleteColumn()">Delete Column</button>
 
-<div id="sendBar">
-<input id="msg" placeholder="Message">
-<input type="file" id="fileInput" hidden>
-<button onclick="document.getElementById('fileInput').click()">📎</button>
-<button onclick="sendMsg()">Send</button>
+  <button class="btn style" onclick="addHeading()">Heading</button>
+  <button class="btn style" onclick="toggleBold()">Bold</button>
+  <button class="btn style" onclick="toggleDotted()">Line</button>
+
+  <button class="btn style" onclick="resizeRow()">Row Size</button>
+  <button class="btn style" onclick="resizeColumn()">Col Size</button>
+
+  <button class="btn view" onclick="toggleView()">View</button>
+  <button class="btn view" onclick="downloadImage()">📸 Save</button>
+
+  <!-- Text Colors -->
+  <div id="colors">
+    <div class="color-box" style="background:red" onclick="setColor('red')"></div>
+    <div class="color-box" style="background:blue" onclick="setColor('blue')"></div>
+    <div class="color-box" style="background:green" onclick="setColor('green')"></div>
+    <div class="color-box" style="background:black" onclick="setColor('black')"></div>
+    <div class="color-box" style="background:purple" onclick="setColor('purple')"></div>
+  </div>
+
+  <!-- Gradient BG -->
+  <select onchange="changeBG(this.value)">
+    <option>BG</option>
+    <option value="linear-gradient(135deg,#f3e5dc,#f8cdda)">Pink</option>
+    <option value="linear-gradient(135deg,#a1c4fd,#c2e9fb)">Blue</option>
+    <option value="linear-gradient(135deg,#fbc2eb,#a6c1ee)">Purple</option>
+  </select>
+
+  <!-- Custom Gradient -->
+  <input type="color" id="g1">
+  <input type="color" id="g2">
+  <button onclick="customGradient()">Apply Gradient</button>
 </div>
 
-<div id="viewer">
-<div id="viewerContent"></div>
-<a id="download" download><button>Download</button></a>
-<button onclick="closeViewer()">Close</button>
+<div id="board">
+  <div id="table"></div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
 <script>
+let rows = 8;
+let cols = 4;
+let selected = null;
 
-const firebaseConfig = {
-apiKey: "AIzaSyDsZWTk-iDl6YXJ7LIOWgDEzOg8b4u41ZQ",
-  authDomain: "xo11-936a9.firebaseapp.com",
-  databaseURL: "https://xo11-936a9-default-rtdb.firebaseio.com",
-  projectId: "xo11-936a9",
-  storageBucket: "xo11-936a9.firebasestorage.app",
+const table = document.getElementById("table");
+
+/* Load saved */
+window.onload = () => {
+  let saved = localStorage.getItem("data");
+  if(saved){
+    table.innerHTML = saved;
+    attachEvents();
+  } else {
+    createGrid();
+  }
 };
 
-firebase.initializeApp(firebaseConfig);
-
-const db = firebase.database();
-const storage = firebase.storage();
-
-let name = localStorage.getItem("chatName");
-
-if(!name){
-name = prompt("Enter your name");
-localStorage.setItem("chatName",name);
+/* Save */
+function save(){
+  localStorage.setItem("data", table.innerHTML);
 }
 
-const nameBtn=document.getElementById("nameBtn");
-nameBtn.innerText=name;
+/* Create grid */
+function createGrid(){
+  table.innerHTML="";
+  table.style.gridTemplateColumns=`repeat(${cols},1fr)`;
 
-nameBtn.onclick=function(){
+  for(let i=0;i<rows*cols;i++){
+    let cell=document.createElement("div");
+    cell.className="cell";
 
-let n=prompt("Change your name");
+    let cb=document.createElement("input");
+    cb.type="checkbox";
 
-if(n){
-name=n;
-localStorage.setItem("chatName",n);
-nameBtn.innerText=n;
+    let txt=document.createElement("div");
+    txt.className="text";
+    txt.contentEditable=true;
+
+    txt.onclick=()=>selected=txt;
+    txt.oninput=save;
+
+    cell.appendChild(cb);
+    cell.appendChild(txt);
+    table.appendChild(cell);
+  }
 }
 
+/* Reattach after load */
+function attachEvents(){
+  document.querySelectorAll(".text").forEach(t=>{
+    t.onclick=()=>selected=t;
+    t.oninput=save;
+  });
 }
 
-function sendMsg(){
+/* Add/Delete */
+function addRow(){ rows++; createGrid(); save();}
+function addColumn(){ cols++; createGrid(); save();}
 
-let msg=document.getElementById("msg");
-
-if(msg.value=="") return;
-
-db.ref("messages").push({
-
-name:name,
-text:msg.value,
-time:Date.now()
-
-});
-
-msg.value="";
-
+function deleteRow(){
+  if(confirm("Delete row?")){
+    if(rows>1) rows--;
+    createGrid(); save();
+  }
 }
 
-document.getElementById("fileInput").onchange=function(){
-
-let file=this.files[0];
-
-if(!file) return;
-
-let ref=storage.ref("chatFiles/"+Date.now()+"_"+file.name);
-
-ref.put(file).then(()=>{
-
-ref.getDownloadURL().then(url=>{
-
-db.ref("messages").push({
-
-name:name,
-file:url,
-type:file.type,
-time:Date.now()
-
-});
-
-});
-
-});
-
+function deleteColumn(){
+  if(confirm("Delete column?")){
+    if(cols>1) cols--;
+    createGrid(); save();
+  }
 }
 
-db.ref("messages").on("child_added",snap=>{
-
-let data=snap.val();
-let id=snap.key;
-
-let div=document.createElement("div");
-div.className="msg";
-
-if(data.name==name) div.classList.add("me");
-
-div.innerHTML="<div class='name'>"+data.name+"</div>";
-
-if(data.text){
-
-div.innerHTML+="<div>"+data.text+"</div>";
-
+/* Heading */
+function addHeading(){
+  let h=document.createElement("div");
+  h.className="heading";
+  h.contentEditable=true;
+  h.innerText="Heading";
+  table.prepend(h);
+  save();
 }
 
-if(data.file){
-
-if(data.type.startsWith("image")){
-
-div.innerHTML+="<img src='"+data.file+"' class='media' onclick=\"openViewer('"+data.file+"')\">";
-
+/* Style */
+function toggleBold(){
+  if(selected){
+    selected.style.fontWeight=
+    selected.style.fontWeight==="bold"?"normal":"bold";
+    save();
+  }
 }
 
-else if(data.type.startsWith("video")){
-
-div.innerHTML+="<video src='"+data.file+"' class='media' controls></video>";
-
+function toggleDotted(){
+  if(selected){
+    selected.classList.toggle("dotted");
+    save();
+  }
 }
 
-else if(data.type.startsWith("audio")){
-
-div.innerHTML+="<audio src='"+data.file+"' controls></audio>";
-
+/* Resize */
+function resizeRow(){
+  let s=prompt("Row height px:");
+  document.querySelectorAll(".cell").forEach(c=>c.style.height=s+"px");
+  save();
 }
 
-else{
-
-div.innerHTML+="<a href='"+data.file+"' target='_blank'>📄 Document</a>";
-
+function resizeColumn(){
+  let s=prompt("Column width px:");
+  table.style.gridTemplateColumns=`repeat(${cols},${s}px)`;
+  save();
 }
 
+/* Text Color */
+function setColor(c){
+  if(selected){
+    selected.style.color=c;
+    save();
+  }
 }
 
-if(data.name==name){
-
-let del=document.createElement("span");
-del.className="delete";
-del.innerHTML="🗑";
-
-del.onclick=function(){
-
-if(confirm("Delete this message?")){
-db.ref("messages/"+id).remove();
-div.remove();
+/* BG */
+function changeBG(val){
+  document.body.style.background=val;
 }
 
+/* Custom gradient */
+function customGradient(){
+  let c1=document.getElementById("g1").value;
+  let c2=document.getElementById("g2").value;
+  document.body.style.background=`linear-gradient(135deg,${c1},${c2})`;
 }
 
-div.appendChild(del);
-
+/* View */
+function toggleView(){
+  document.body.classList.toggle("view-mode");
 }
 
-document.getElementById("chat").appendChild(div);
-
-document.getElementById("chat").scrollTop=999999;
-
-});
-
-function openViewer(url){
-
-document.getElementById("viewer").style.display="flex";
-
-document.getElementById("viewerContent").innerHTML=
-"<img src='"+url+"' style='max-width:100%'>";
-
-document.getElementById("download").href=url;
-
+/* Download image */
+function downloadImage(){
+  html2canvas(document.getElementById("board")).then(canvas=>{
+    let link=document.createElement("a");
+    link.download="list.png";
+    link.href=canvas.toDataURL();
+    link.click();
+  });
 }
-
-function closeViewer(){
-
-document.getElementById("viewer").style.display="none";
-
-}
-
 </script>
 
 </body>
