@@ -28,38 +28,12 @@ body {
   border-radius: 10px;
   cursor: pointer;
   font-weight: bold;
-  transition: 0.3s;
 }
 
-/* Button gradients */
 .add { background: linear-gradient(45deg,#36d1dc,#5b86e5); }
 .delete { background: linear-gradient(45deg,#ff416c,#ff4b2b); }
 .style { background: linear-gradient(45deg,#8e2de2,#4a00e0); }
 .view { background: linear-gradient(45deg,#11998e,#38ef7d); }
-
-/* Download animation */
-.download {
-  background: linear-gradient(45deg,#ff9a9e,#fad0c4);
-  position: relative;
-  overflow: hidden;
-}
-
-.download.loading {
-  pointer-events: none;
-  opacity: 0.7;
-}
-
-.download.loading::after {
-  content: "Saving...";
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.4);
-  color: white;
-  font-size: 12px;
-}
 
 /* Board */
 #board {
@@ -80,6 +54,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
 }
 
 .cell input {
@@ -94,29 +69,34 @@ body {
   outline: none;
 }
 
-.dotted { border-bottom: 1px dashed #999; }
-
 .heading {
-  grid-column: span 100%;
   font-size: 22px;
   font-weight: bold;
   border-bottom: 3px solid black;
-  padding: 10px 0;
 }
 
-.view-mode #toolbar { display: none; }
-
-#colors {
-  display: flex;
-  gap: 5px;
+/* Popup color panel */
+#colorPopup {
+  position: fixed;
+  right: 10px;
+  top: 100px;
+  background: white;
+  padding: 10px;
+  border-radius: 10px;
+  display: none;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
 }
 
 .color-box {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
+  width: 25px;
+  height: 25px;
+  margin: 5px;
+  border-radius: 5px;
   cursor: pointer;
+  display: inline-block;
 }
+
+.view-mode #toolbar { display: none; }
 </style>
 </head>
 
@@ -129,31 +109,31 @@ body {
   <button class="btn delete" onclick="deleteRow()">Delete Row</button>
   <button class="btn delete" onclick="deleteColumn()">Delete Column</button>
 
-  <button class="btn style" onclick="addHeading()">Heading</button>
+  <button class="btn style" onclick="addHeading()">Add Heading</button>
   <button class="btn style" onclick="toggleBold()">Bold</button>
-  <button class="btn style" onclick="toggleDotted()">Line</button>
 
   <button class="btn view" onclick="toggleView()">View</button>
-
-  <button id="downloadBtn" class="btn download" onclick="downloadImage()">📸 Download</button>
-
-  <div id="colors">
-    <div class="color-box" style="background:red" onclick="setColor('red')"></div>
-    <div class="color-box" style="background:blue" onclick="setColor('blue')"></div>
-    <div class="color-box" style="background:green" onclick="setColor('green')"></div>
-    <div class="color-box" style="background:black" onclick="setColor('black')"></div>
-  </div>
 </div>
 
 <div id="board">
   <div id="table"></div>
 </div>
 
-<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<!-- 🎨 Popup -->
+<div id="colorPopup">
+  <div class="color-box" style="background:red" onclick="setColor('red')"></div>
+  <div class="color-box" style="background:blue" onclick="setColor('blue')"></div>
+  <div class="color-box" style="background:green" onclick="setColor('green')"></div>
+  <div class="color-box" style="background:black" onclick="setColor('black')"></div>
+  <div class="color-box" style="background:purple" onclick="setColor('purple')"></div>
+</div>
 
 <script>
-let rows = 6, cols = 4, selected=null;
-const table=document.getElementById("table");
+let rows = 6, cols = 4;
+let selectedText = null;
+let selectedCell = null;
+
+const table = document.getElementById("table");
 
 function createGrid(){
   table.innerHTML="";
@@ -170,7 +150,11 @@ function createGrid(){
     txt.className="text";
     txt.contentEditable=true;
 
-    txt.onclick=()=>selected=txt;
+    txt.onclick=(e)=>{
+      selectedText=txt;
+      selectedCell=cell;
+      showPopup(e);
+    };
 
     cell.append(cb,txt);
     table.appendChild(cell);
@@ -178,59 +162,45 @@ function createGrid(){
 }
 createGrid();
 
-/* Basic */
+/* Add/Delete */
 function addRow(){rows++;createGrid();}
 function addColumn(){cols++;createGrid();}
 function deleteRow(){if(confirm("Delete row?")){rows--;createGrid();}}
-function deleteColumn(){if(confirm("Delete column?")){cols--;createGrid();}}
+function deleteColumn(){if(confirm("Delete col?")){cols--;createGrid();}}
 
+/* 🔥 Heading at selected position */
 function addHeading(){
-  let h=document.createElement("div");
-  h.className="heading";
-  h.contentEditable=true;
-  h.innerText="Heading";
-  table.prepend(h);
-}
-
-function toggleBold(){
-  if(selected){
-    selected.style.fontWeight=
-    selected.style.fontWeight==="bold"?"normal":"bold";
+  if(selectedCell){
+    selectedCell.innerHTML="";
+    let h=document.createElement("div");
+    h.className="heading";
+    h.contentEditable=true;
+    h.innerText="Heading";
+    selectedCell.appendChild(h);
+  } else {
+    alert("Select a cell first");
   }
 }
 
-function toggleDotted(){
-  if(selected) selected.classList.toggle("dotted");
+/* Bold */
+function toggleBold(){
+  if(selectedText){
+    selectedText.style.fontWeight=
+    selectedText.style.fontWeight==="bold"?"normal":"bold";
+  }
 }
 
+/* 🎨 Popup */
+function showPopup(e){
+  let popup=document.getElementById("colorPopup");
+  popup.style.display="block";
+}
+
+/* Color */
 function setColor(c){
-  if(selected) selected.style.color=c;
-}
-
-/* 🔥 FIXED DOWNLOAD */
-function downloadImage(){
-  const btn=document.getElementById("downloadBtn");
-  btn.classList.add("loading");
-
-  html2canvas(document.getElementById("board")).then(canvas=>{
-    
-    canvas.toBlob(function(blob){
-      const link=document.createElement("a");
-
-      const fileName = "Checklist_" + new Date().getTime() + ".png";
-
-      link.href=URL.createObjectURL(blob);
-      link.download=fileName;
-      link.click();
-
-      /* Mobile visibility fix */
-      setTimeout(()=>{
-        btn.classList.remove("loading");
-        alert("Saved! Check Downloads or Files app 📂");
-      },1000);
-
-    }, "image/png");
-  });
+  if(selectedText){
+    selectedText.style.color=c;
+  }
 }
 
 /* View */
