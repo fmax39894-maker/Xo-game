@@ -49,17 +49,10 @@ body {
   gap: 10px;
 }
 
-/* Cell */
 .cell {
   display: flex;
   align-items: center;
   gap: 8px;
-  position: relative;
-}
-
-.cell input {
-  width: 18px;
-  height: 18px;
 }
 
 .text {
@@ -69,34 +62,33 @@ body {
   outline: none;
 }
 
+/* Heading */
 .heading {
   font-size: 22px;
   font-weight: bold;
   border-bottom: 3px solid black;
 }
 
-/* Popup color panel */
-#colorPopup {
-  position: fixed;
-  right: 10px;
-  top: 100px;
+/* Side popup */
+#popup {
+  position: absolute;
   background: white;
-  padding: 10px;
+  padding: 8px;
   border-radius: 10px;
-  display: none;
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  display: none;
+  gap: 5px;
 }
 
-.color-box {
-  width: 25px;
-  height: 25px;
-  margin: 5px;
-  border-radius: 5px;
+/* Color boxes */
+.color {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
   cursor: pointer;
-  display: inline-block;
 }
 
-.view-mode #toolbar { display: none; }
+.view-mode #toolbar { display:none; }
 </style>
 </head>
 
@@ -110,8 +102,6 @@ body {
   <button class="btn delete" onclick="deleteColumn()">Delete Column</button>
 
   <button class="btn style" onclick="addHeading()">Add Heading</button>
-  <button class="btn style" onclick="toggleBold()">Bold</button>
-
   <button class="btn view" onclick="toggleView()">View</button>
 </div>
 
@@ -119,22 +109,26 @@ body {
   <div id="table"></div>
 </div>
 
-<!-- 🎨 Popup -->
-<div id="colorPopup">
-  <div class="color-box" style="background:red" onclick="setColor('red')"></div>
-  <div class="color-box" style="background:blue" onclick="setColor('blue')"></div>
-  <div class="color-box" style="background:green" onclick="setColor('green')"></div>
-  <div class="color-box" style="background:black" onclick="setColor('black')"></div>
-  <div class="color-box" style="background:purple" onclick="setColor('purple')"></div>
+<!-- Floating popup -->
+<div id="popup">
+  <div class="color" style="background:red" onclick="setColor('red')"></div>
+  <div class="color" style="background:blue" onclick="setColor('blue')"></div>
+  <div class="color" style="background:green" onclick="setColor('green')"></div>
+  <div class="color" style="background:black" onclick="setColor('black')"></div>
+
+  <button onclick="bold()">B</button>
+  <button onclick="line()">Line</button>
 </div>
 
 <script>
-let rows = 6, cols = 4;
-let selectedText = null;
-let selectedCell = null;
+let rows=6, cols=4;
+let selected=null;
+let selectedCell=null;
 
-const table = document.getElementById("table");
+const table=document.getElementById("table");
+const popup=document.getElementById("popup");
 
+/* Create grid */
 function createGrid(){
   table.innerHTML="";
   table.style.gridTemplateColumns=`repeat(${cols},1fr)`;
@@ -143,24 +137,57 @@ function createGrid(){
     let cell=document.createElement("div");
     cell.className="cell";
 
-    let cb=document.createElement("input");
-    cb.type="checkbox";
-
     let txt=document.createElement("div");
     txt.className="text";
     txt.contentEditable=true;
 
     txt.onclick=(e)=>{
-      selectedText=txt;
+      selected=txt;
       selectedCell=cell;
-      showPopup(e);
+
+      showPopup(e.pageX,e.pageY);
     };
 
-    cell.append(cb,txt);
+    cell.appendChild(txt);
     table.appendChild(cell);
   }
 }
 createGrid();
+
+/* Popup */
+function showPopup(x,y){
+  popup.style.left=x+"px";
+  popup.style.top=y+"px";
+  popup.style.display="flex";
+}
+
+/* Style */
+function setColor(c){
+  if(selected) selected.style.color=c;
+}
+
+function bold(){
+  if(selected){
+    selected.style.fontWeight=
+    selected.style.fontWeight==="bold"?"normal":"bold";
+  }
+}
+
+function line(){
+  if(selected){
+    selected.style.borderBottom="2px dashed #000";
+  }
+}
+
+/* Heading at selected position */
+function addHeading(){
+  if(selected){
+    selected.classList.add("heading");
+    selected.innerText="Heading";
+  } else {
+    alert("Select a cell first");
+  }
+}
 
 /* Add/Delete */
 function addRow(){rows++;createGrid();}
@@ -168,45 +195,17 @@ function addColumn(){cols++;createGrid();}
 function deleteRow(){if(confirm("Delete row?")){rows--;createGrid();}}
 function deleteColumn(){if(confirm("Delete col?")){cols--;createGrid();}}
 
-/* 🔥 Heading at selected position */
-function addHeading(){
-  if(selectedCell){
-    selectedCell.innerHTML="";
-    let h=document.createElement("div");
-    h.className="heading";
-    h.contentEditable=true;
-    h.innerText="Heading";
-    selectedCell.appendChild(h);
-  } else {
-    alert("Select a cell first");
-  }
-}
-
-/* Bold */
-function toggleBold(){
-  if(selectedText){
-    selectedText.style.fontWeight=
-    selectedText.style.fontWeight==="bold"?"normal":"bold";
-  }
-}
-
-/* 🎨 Popup */
-function showPopup(e){
-  let popup=document.getElementById("colorPopup");
-  popup.style.display="block";
-}
-
-/* Color */
-function setColor(c){
-  if(selectedText){
-    selectedText.style.color=c;
-  }
-}
-
 /* View */
 function toggleView(){
   document.body.classList.toggle("view-mode");
 }
+
+/* Hide popup on outside click */
+document.body.onclick=(e)=>{
+  if(!e.target.closest(".text") && !e.target.closest("#popup")){
+    popup.style.display="none";
+  }
+};
 </script>
 
 </body>
