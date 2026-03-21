@@ -2,210 +2,365 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Checklist App Pro Max</title>
+<title>Checklist Pro Fixed</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial;
-  background: linear-gradient(135deg,#f3e5dc,#f8cdda);
+body{
+  margin:0;
+  font-family:Arial;
+  background:linear-gradient(135deg,#f093fb,#f5576c);
 }
 
 /* Toolbar */
-#toolbar {
-  padding: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
+#toolbar{
+  padding:10px;
+  display:flex;
+  justify-content:center;
+  gap:8px;
 }
 
-/* Buttons */
-.btn {
-  border: none;
-  color: white;
-  padding: 8px 14px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: bold;
+.btn{
+  border:none;
+  padding:8px 12px;
+  color:white;
+  border-radius:10px;
+  cursor:pointer;
+  background:linear-gradient(45deg,#36d1dc,#5b86e5);
 }
 
-.add { background: linear-gradient(45deg,#36d1dc,#5b86e5); }
-.delete { background: linear-gradient(45deg,#ff416c,#ff4b2b); }
-.style { background: linear-gradient(45deg,#8e2de2,#4a00e0); }
-.view { background: linear-gradient(45deg,#11998e,#38ef7d); }
+.delete{background:linear-gradient(45deg,#ff416c,#ff4b2b);}
+.download{background:linear-gradient(45deg,#ff9a9e,#fad0c4);}
 
 /* Board */
-#board {
-  margin: 15px;
-  padding: 15px;
-  background: #ffffffcc;
-  border-radius: 20px;
+#board{
+  margin:10px;
+  padding:10px;
+  background:#fff;
+  border-radius:20px;
 }
 
 /* Grid */
-#table {
-  display: grid;
-  gap: 10px;
+#table{
+  display:grid;
 }
 
-.cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* Cell */
+.cell{
+  border:1px solid #aaa;
+  position:relative;
 }
 
-.text {
-  flex: 1;
-  border-bottom: 1px solid #999;
-  min-height: 20px;
-  outline: none;
+.text{
+  padding:6px;
+  outline:none;
 }
 
-/* Heading */
-.heading {
-  font-size: 22px;
-  font-weight: bold;
-  border-bottom: 3px solid black;
+.selected{
+  background:#ffeaa7;
 }
 
-/* Side popup */
-#popup {
-  position: absolute;
-  background: white;
-  padding: 8px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
-  display: none;
-  gap: 5px;
+/* Resize Drag */
+.col-resize{
+  position:absolute;
+  right:0;
+  top:0;
+  width:6px;
+  height:100%;
+  cursor:col-resize;
 }
 
-/* Color boxes */
-.color {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  cursor: pointer;
+.row-resize{
+  position:absolute;
+  bottom:0;
+  left:0;
+  height:6px;
+  width:100%;
+  cursor:row-resize;
 }
 
-.view-mode #toolbar { display:none; }
+/* Panel */
+#panel{
+  position:fixed;
+  top:200px;
+  left:20px;
+  background:white;
+  padding:10px;
+  border-radius:12px;
+  display:none;
+  flex-direction:column;
+  gap:8px;
+  z-index:999;
+}
+
+/* Drag */
+#drag{
+  cursor:grab;
+  text-align:center;
+  font-size:18px;
+  background:#eee;
+  padding:5px;
+  border-radius:6px;
+}
+
+/* Sections */
+.section{
+  border-top:1px solid #ddd;
+  padding-top:5px;
+}
+
+.label{
+  font-size:12px;
+}
+
+/* Colors */
+.color-box{
+  width:24px;
+  height:24px;
+  display:inline-block;
+  margin:2px;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+/* Resize Buttons */
+.resize-btn{
+  margin:2px;
+  padding:4px 8px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  background:#5b86e5;
+  color:white;
+}
 </style>
 </head>
 
 <body>
 
 <div id="toolbar">
-  <button class="btn add" onclick="addRow()">Add Row</button>
-  <button class="btn add" onclick="addColumn()">Add Column</button>
-
-  <button class="btn delete" onclick="deleteRow()">Delete Row</button>
-  <button class="btn delete" onclick="deleteColumn()">Delete Column</button>
-
-  <button class="btn style" onclick="addHeading()">Add Heading</button>
-  <button class="btn view" onclick="toggleView()">View</button>
+  <button class="btn" onclick="addRow()">+Row</button>
+  <button class="btn" onclick="addCol()">+Col</button>
+  <button class="btn delete" onclick="delRow()">-Row</button>
+  <button class="btn delete" onclick="delCol()">-Col</button>
+  <button class="btn download" onclick="download()">📸</button>
 </div>
 
 <div id="board">
   <div id="table"></div>
 </div>
 
-<!-- Floating popup -->
-<div id="popup">
-  <div class="color" style="background:red" onclick="setColor('red')"></div>
-  <div class="color" style="background:blue" onclick="setColor('blue')"></div>
-  <div class="color" style="background:green" onclick="setColor('green')"></div>
-  <div class="color" style="background:black" onclick="setColor('black')"></div>
+<!-- PANEL -->
+<div id="panel">
+  <div id="drag">✳️ Drag</div>
 
-  <button onclick="bold()">B</button>
-  <button onclick="line()">Line</button>
+  <div class="section">
+    <div class="label">Heading</div>
+    <button onclick="toggleHeading()">Toggle</button>
+  </div>
+
+  <!-- 🔥 NEW RESIZE BUTTONS -->
+  <div class="section">
+    <div class="label">Column Width</div>
+    <button class="resize-btn" onclick="colMinus()">-</button>
+    <button class="resize-btn" onclick="colPlus()">+</button>
+  </div>
+
+  <div class="section">
+    <div class="label">Row Height</div>
+    <button class="resize-btn" onclick="rowMinus()">-</button>
+    <button class="resize-btn" onclick="rowPlus()">+</button>
+  </div>
+
+  <div class="section">
+    <div class="label">Text Colors</div>
+    <div>
+      <span class="color-box" style="background:red" onclick="setColor('red')"></span>
+      <span class="color-box" style="background:blue" onclick="setColor('blue')"></span>
+      <span class="color-box" style="background:green" onclick="setColor('green')"></span>
+      <span class="color-box" style="background:black" onclick="setColor('black')"></span>
+      <span class="color-box" style="background:purple" onclick="setColor('purple')"></span>
+      <span class="color-box" style="background:orange" onclick="setColor('orange')"></span>
+      <span class="color-box" style="background:brown" onclick="setColor('brown')"></span>
+      <span class="color-box" style="background:teal" onclick="setColor('teal')"></span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="label">Text Size</div>
+    <input type="range" min="1" max="100" oninput="setSize(this.value)">
+  </div>
 </div>
 
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
 <script>
-let rows=6, cols=4;
-let selected=null;
-let selectedCell=null;
+let rows=5, cols=2;
+let data=[];
+let colW=Array(cols).fill(150);
+let rowH=Array(rows).fill(60);
+
+let selected={r:0,c:0};
+
+function init(){
+  for(let r=0;r<rows;r++){
+    data[r]=[];
+    for(let c=0;c<cols;c++){
+      data[r][c]={text:"",style:{}};
+    }
+  }
+}
+init();
 
 const table=document.getElementById("table");
-const popup=document.getElementById("popup");
+const panel=document.getElementById("panel");
 
-/* Create grid */
-function createGrid(){
+/* Render */
+function render(){
   table.innerHTML="";
-  table.style.gridTemplateColumns=`repeat(${cols},1fr)`;
+  table.style.gridTemplateColumns=colW.map(w=>w+"px").join(" ");
 
-  for(let i=0;i<rows*cols;i++){
-    let cell=document.createElement("div");
-    cell.className="cell";
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      let cell=document.createElement("div");
+      cell.className="cell";
+      cell.style.height=rowH[r]+"px";
 
-    let txt=document.createElement("div");
-    txt.className="text";
-    txt.contentEditable=true;
+      let txt=document.createElement("div");
+      txt.className="text";
+      txt.contentEditable=true;
+      txt.innerText=data[r][c].text;
+      Object.assign(txt.style,data[r][c].style);
 
-    txt.onclick=(e)=>{
-      selected=txt;
-      selectedCell=cell;
+      txt.oninput=()=>data[r][c].text=txt.innerText;
 
-      showPopup(e.pageX,e.pageY);
-    };
+      txt.onclick=()=>{
+        selected={r,c};
+        highlight();
+        panel.style.display="flex";
+      };
 
-    cell.appendChild(txt);
-    table.appendChild(cell);
+      let cr=document.createElement("div");
+      cr.className="col-resize";
+      cr.onmousedown=e=>resizeCol(e,c);
+
+      let rr=document.createElement("div");
+      rr.className="row-resize";
+      rr.onmousedown=e=>resizeRow(e,r);
+
+      cell.append(txt,cr,rr);
+      table.appendChild(cell);
+    }
   }
 }
-createGrid();
+render();
 
-/* Popup */
-function showPopup(x,y){
-  popup.style.left=x+"px";
-  popup.style.top=y+"px";
-  popup.style.display="flex";
-}
-
-/* Style */
-function setColor(c){
-  if(selected) selected.style.color=c;
-}
-
-function bold(){
-  if(selected){
-    selected.style.fontWeight=
-    selected.style.fontWeight==="bold"?"normal":"bold";
-  }
-}
-
-function line(){
-  if(selected){
-    selected.style.borderBottom="2px dashed #000";
-  }
-}
-
-/* Heading at selected position */
-function addHeading(){
-  if(selected){
-    selected.classList.add("heading");
-    selected.innerText="Heading";
-  } else {
-    alert("Select a cell first");
-  }
+function highlight(){
+  document.querySelectorAll(".cell").forEach(c=>c.classList.remove("selected"));
+  table.children[selected.r*cols+selected.c].classList.add("selected");
 }
 
 /* Add/Delete */
-function addRow(){rows++;createGrid();}
-function addColumn(){cols++;createGrid();}
-function deleteRow(){if(confirm("Delete row?")){rows--;createGrid();}}
-function deleteColumn(){if(confirm("Delete col?")){cols--;createGrid();}}
-
-/* View */
-function toggleView(){
-  document.body.classList.toggle("view-mode");
+function addRow(){
+  rows++;
+  rowH.push(60);
+  let newRow=[];
+  for(let c=0;c<cols;c++) newRow.push({text:"",style:{}});
+  data.push(newRow);
+  render();
 }
 
-/* Hide popup on outside click */
-document.body.onclick=(e)=>{
-  if(!e.target.closest(".text") && !e.target.closest("#popup")){
-    popup.style.display="none";
+function addCol(){
+  cols++;
+  colW.push(150);
+  data.forEach(r=>r.push({text:"",style:{}}));
+  render();
+}
+
+function delRow(){
+  if(rows>1 && confirm("Delete row?")){
+    rows--;
+    rowH.pop();
+    data.pop();
+    render();
   }
-};
+}
+
+function delCol(){
+  if(cols>1 && confirm("Delete col?")){
+    cols--;
+    colW.pop();
+    data.forEach(r=>r.pop());
+    render();
+  }
+}
+
+/* 🔥 BUTTON RESIZE */
+function colPlus(){ colW[selected.c]+=10; render(); }
+function colMinus(){ colW[selected.c]-=10; render(); }
+
+function rowPlus(){ rowH[selected.r]+=10; render(); }
+function rowMinus(){ rowH[selected.r]-=10; render(); }
+
+/* Drag Resize */
+function resizeCol(e,i){
+  document.onmousemove=ev=>{colW[i]+=ev.movementX;render();}
+  document.onmouseup=()=>document.onmousemove=null;
+}
+function resizeRow(e,i){
+  document.onmousemove=ev=>{rowH[i]+=ev.movementY;render();}
+  document.onmouseup=()=>document.onmousemove=null;
+}
+
+/* Drag Panel */
+let dragging=false,ox=0,oy=0;
+
+function startDrag(e){
+  dragging=true;
+  let t=e.touches?e.touches[0]:e;
+  ox=t.clientX-panel.offsetLeft;
+  oy=t.clientY-panel.offsetTop;
+}
+
+function moveDrag(e){
+  if(!dragging)return;
+  e.preventDefault();
+  let t=e.touches?e.touches[0]:e;
+  panel.style.left=(t.clientX-ox)+"px";
+  panel.style.top=(t.clientY-oy)+"px";
+}
+
+function stopDrag(){dragging=false;}
+
+const drag=document.getElementById("drag");
+drag.addEventListener("mousedown",startDrag);
+drag.addEventListener("touchstart",startDrag);
+
+document.addEventListener("mousemove",moveDrag);
+document.addEventListener("touchmove",moveDrag,{passive:false});
+
+document.addEventListener("mouseup",stopDrag);
+document.addEventListener("touchend",stopDrag);
+
+/* Styles */
+function setColor(c){data[selected.r][selected.c].style.color=c;render();}
+function setSize(s){data[selected.r][selected.c].style.fontSize=s+"px";render();}
+
+function toggleHeading(){
+  let s=data[selected.r][selected.c].style;
+  s.fontWeight=s.fontWeight==="bold"?"normal":"bold";
+  s.fontSize="22px";
+  render();
+}
+
+/* Download */
+function download(){
+  html2canvas(document.getElementById("board")).then(c=>{
+    let a=document.createElement("a");
+    a.href=c.toDataURL();
+    a.download="list.png";
+    a.click();
+  });
+}
 </script>
 
 </body>
