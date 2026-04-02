@@ -2,364 +2,271 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Checklist Pro Fixed</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel App Pro</title>
 
 <style>
 body{
-  margin:0;
-  font-family:Arial;
-  background:linear-gradient(135deg,#f093fb,#f5576c);
+    margin:0;
+    font-family: Arial;
+    background:#0f0f0f;
+    color:white;
+    display:flex;
+    justify-content:center;
 }
 
-/* Toolbar */
-#toolbar{
-  padding:10px;
-  display:flex;
-  justify-content:center;
-  gap:8px;
+.container{
+    width:100%;
+    max-width:420px;
+    padding:15px;
 }
 
-.btn{
-  border:none;
-  padding:8px 12px;
-  color:white;
-  border-radius:10px;
-  cursor:pointer;
-  background:linear-gradient(45deg,#36d1dc,#5b86e5);
+/* Card UI */
+.card{
+    background:#1a1a1a;
+    border-radius:15px;
+    padding:15px;
+    box-shadow:0 0 10px rgba(0,0,0,0.5);
 }
 
-.delete{background:linear-gradient(45deg,#ff416c,#ff4b2b);}
-.download{background:linear-gradient(45deg,#ff9a9e,#fad0c4);}
-
-/* Board */
-#board{
-  margin:10px;
-  padding:10px;
-  background:#fff;
-  border-radius:20px;
+/* Title */
+h2{
+    text-align:center;
+    margin-bottom:10px;
 }
 
-/* Grid */
-#table{
-  display:grid;
+/* Upload button */
+.upload-btn{
+    display:block;
+    text-align:center;
+    padding:12px;
+    background:#2b2b2b;
+    border-radius:10px;
+    cursor:pointer;
+    transition:0.3s;
+}
+.upload-btn:hover{
+    background:#3d3d3d;
+    transform:scale(1.03);
 }
 
-/* Cell */
-.cell{
-  border:1px solid #aaa;
-  position:relative;
+/* Row layout */
+.row{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    margin-top:10px;
 }
 
-.text{
-  padding:6px;
-  outline:none;
+/* Inputs */
+input[type="number"]{
+    width:100%;
+    padding:6px;
+    border-radius:6px;
+    border:none;
+    background:#2a2a2a;
+    color:white;
 }
 
-.selected{
-  background:#ffeaa7;
+/* Small color box */
+input[type="color"]{
+    width:45px;
+    height:35px;
+    border:none;
 }
 
-/* Resize Drag */
-.col-resize{
-  position:absolute;
-  right:0;
-  top:0;
-  width:6px;
-  height:100%;
-  cursor:col-resize;
+/* Buttons */
+.buttons{
+    display:flex;
+    gap:10px;
+    margin-top:10px;
 }
 
-.row-resize{
-  position:absolute;
-  bottom:0;
-  left:0;
-  height:6px;
-  width:100%;
-  cursor:row-resize;
+button{
+    flex:1;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    background:#3a3a3a;
+    color:white;
+    cursor:pointer;
+    transition:0.2s;
+}
+button:hover{
+    background:#555;
 }
 
-/* Panel */
-#panel{
-  position:fixed;
-  top:200px;
-  left:20px;
-  background:white;
-  padding:10px;
-  border-radius:12px;
-  display:none;
-  flex-direction:column;
-  gap:8px;
-  z-index:999;
+/* Canvas */
+canvas{
+    margin-top:15px;
+    width:100%;
+    border-radius:10px;
+    border:2px solid #333;
 }
 
-/* Drag */
-#drag{
-  cursor:grab;
-  text-align:center;
-  font-size:18px;
-  background:#eee;
-  padding:5px;
-  border-radius:6px;
+/* Export screen */
+.export-screen{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
 }
 
-/* Sections */
-.section{
-  border-top:1px solid #ddd;
-  padding-top:5px;
-}
-
-.label{
-  font-size:12px;
-}
-
-/* Colors */
-.color-box{
-  width:24px;
-  height:24px;
-  display:inline-block;
-  margin:2px;
-  border-radius:5px;
-  cursor:pointer;
-}
-
-/* Resize Buttons */
-.resize-btn{
-  margin:2px;
-  padding:4px 8px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  background:#5b86e5;
-  color:white;
+.export-screen img{
+    max-width:95%;
+    border:2px solid white;
+    border-radius:10px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="toolbar">
-  <button class="btn" onclick="addRow()">+Row</button>
-  <button class="btn" onclick="addCol()">+Col</button>
-  <button class="btn delete" onclick="delRow()">-Row</button>
-  <button class="btn delete" onclick="delCol()">-Col</button>
-  <button class="btn download" onclick="download()">📸</button>
+<div class="container">
+<div class="card">
+
+<h2>Pixel App Pro</h2>
+
+<label class="upload-btn">
+    📁 Import Image
+    <input type="file" id="upload" hidden>
+</label>
+
+<div class="row">
+    <input type="number" id="rows" placeholder="Rows">
+    <input type="number" id="cols" placeholder="Cols">
 </div>
 
-<div id="board">
-  <div id="table"></div>
+<div class="row">
+    <input type="number" id="gridSize" value="1" min="0" placeholder="Grid">
+    <input type="color" id="gridColor" value="#ffffff">
 </div>
 
-<!-- PANEL -->
-<div id="panel">
-  <div id="drag">✳️ Drag</div>
-
-  <div class="section">
-    <div class="label">Heading</div>
-    <button onclick="toggleHeading()">Toggle</button>
-  </div>
-
-  <!-- 🔥 NEW RESIZE BUTTONS -->
-  <div class="section">
-    <div class="label">Column Width</div>
-    <button class="resize-btn" onclick="colMinus()">-</button>
-    <button class="resize-btn" onclick="colPlus()">+</button>
-  </div>
-
-  <div class="section">
-    <div class="label">Row Height</div>
-    <button class="resize-btn" onclick="rowMinus()">-</button>
-    <button class="resize-btn" onclick="rowPlus()">+</button>
-  </div>
-
-  <div class="section">
-    <div class="label">Text Colors</div>
-    <div>
-      <span class="color-box" style="background:red" onclick="setColor('red')"></span>
-      <span class="color-box" style="background:blue" onclick="setColor('blue')"></span>
-      <span class="color-box" style="background:green" onclick="setColor('green')"></span>
-      <span class="color-box" style="background:black" onclick="setColor('black')"></span>
-      <span class="color-box" style="background:purple" onclick="setColor('purple')"></span>
-      <span class="color-box" style="background:orange" onclick="setColor('orange')"></span>
-      <span class="color-box" style="background:brown" onclick="setColor('brown')"></span>
-      <span class="color-box" style="background:teal" onclick="setColor('teal')"></span>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="label">Text Size</div>
-    <input type="range" min="1" max="100" oninput="setSize(this.value)">
-  </div>
+<div class="buttons">
+    <button onclick="pixelate()">Generate</button>
+    <button onclick="download()">Export</button>
 </div>
 
-<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<canvas id="canvas"></canvas>
+
+</div>
+</div>
 
 <script>
-let rows=5, cols=2;
-let data=[];
-let colW=Array(cols).fill(150);
-let rowH=Array(rows).fill(60);
+let img = new Image();
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-let selected={r:0,c:0};
+const rowsInput = document.getElementById("rows");
+const colsInput = document.getElementById("cols");
 
-function init(){
-  for(let r=0;r<rows;r++){
-    data[r]=[];
-    for(let c=0;c<cols;c++){
-      data[r][c]={text:"",style:{}};
+// Upload
+document.getElementById("upload").addEventListener("change", function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event){
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+// Load image
+img.onload = function(){
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+};
+
+// Auto ratio sync
+rowsInput.addEventListener("input", function(){
+    const r = parseInt(this.value);
+    if(!r || !img.width) return;
+    colsInput.value = Math.round(r * (img.width / img.height));
+});
+
+colsInput.addEventListener("input", function(){
+    const c = parseInt(this.value);
+    if(!c || !img.width) return;
+    rowsInput.value = Math.round(c * (img.height / img.width));
+});
+
+// Pixel effect
+function pixelate(){
+    const rows = parseInt(rowsInput.value);
+    const cols = parseInt(colsInput.value);
+
+    if(!rows || !cols){
+        alert("Enter rows or cols");
+        return;
     }
-  }
+
+    const temp = document.createElement("canvas");
+    const tctx = temp.getContext("2d");
+
+    temp.width = cols;
+    temp.height = rows;
+
+    tctx.drawImage(img, 0, 0, cols, rows);
+
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(temp, 0, 0, cols, rows, 0, 0, canvas.width, canvas.height);
+
+    drawGrid(rows, cols);
 }
-init();
 
-const table=document.getElementById("table");
-const panel=document.getElementById("panel");
+// Grid
+function drawGrid(rows, cols){
+    const size = parseInt(document.getElementById("gridSize").value);
+    if(size <= 0) return;
 
-/* Render */
-function render(){
-  table.innerHTML="";
-  table.style.gridTemplateColumns=colW.map(w=>w+"px").join(" ");
+    const color = document.getElementById("gridColor").value;
 
-  for(let r=0;r<rows;r++){
-    for(let c=0;c<cols;c++){
-      let cell=document.createElement("div");
-      cell.className="cell";
-      cell.style.height=rowH[r]+"px";
+    const w = canvas.width / cols;
+    const h = canvas.height / rows;
 
-      let txt=document.createElement("div");
-      txt.className="text";
-      txt.contentEditable=true;
-      txt.innerText=data[r][c].text;
-      Object.assign(txt.style,data[r][c].style);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = size;
 
-      txt.oninput=()=>data[r][c].text=txt.innerText;
-
-      txt.onclick=()=>{
-        selected={r,c};
-        highlight();
-        panel.style.display="flex";
-      };
-
-      let cr=document.createElement("div");
-      cr.className="col-resize";
-      cr.onmousedown=e=>resizeCol(e,c);
-
-      let rr=document.createElement("div");
-      rr.className="row-resize";
-      rr.onmousedown=e=>resizeRow(e,r);
-
-      cell.append(txt,cr,rr);
-      table.appendChild(cell);
+    for(let x=0; x<=cols; x++){
+        ctx.beginPath();
+        ctx.moveTo(x*w, 0);
+        ctx.lineTo(x*w, canvas.height);
+        ctx.stroke();
     }
-  }
-}
-render();
 
-function highlight(){
-  document.querySelectorAll(".cell").forEach(c=>c.classList.remove("selected"));
-  table.children[selected.r*cols+selected.c].classList.add("selected");
-}
-
-/* Add/Delete */
-function addRow(){
-  rows++;
-  rowH.push(60);
-  let newRow=[];
-  for(let c=0;c<cols;c++) newRow.push({text:"",style:{}});
-  data.push(newRow);
-  render();
+    for(let y=0; y<=rows; y++){
+        ctx.beginPath();
+        ctx.moveTo(0, y*h);
+        ctx.lineTo(canvas.width, y*h);
+        ctx.stroke();
+    }
 }
 
-function addCol(){
-  cols++;
-  colW.push(150);
-  data.forEach(r=>r.push({text:"",style:{}}));
-  render();
-}
-
-function delRow(){
-  if(rows>1 && confirm("Delete row?")){
-    rows--;
-    rowH.pop();
-    data.pop();
-    render();
-  }
-}
-
-function delCol(){
-  if(cols>1 && confirm("Delete col?")){
-    cols--;
-    colW.pop();
-    data.forEach(r=>r.pop());
-    render();
-  }
-}
-
-/* 🔥 BUTTON RESIZE */
-function colPlus(){ colW[selected.c]+=10; render(); }
-function colMinus(){ colW[selected.c]-=10; render(); }
-
-function rowPlus(){ rowH[selected.r]+=10; render(); }
-function rowMinus(){ rowH[selected.r]-=10; render(); }
-
-/* Drag Resize */
-function resizeCol(e,i){
-  document.onmousemove=ev=>{colW[i]+=ev.movementX;render();}
-  document.onmouseup=()=>document.onmousemove=null;
-}
-function resizeRow(e,i){
-  document.onmousemove=ev=>{rowH[i]+=ev.movementY;render();}
-  document.onmouseup=()=>document.onmousemove=null;
-}
-
-/* Drag Panel */
-let dragging=false,ox=0,oy=0;
-
-function startDrag(e){
-  dragging=true;
-  let t=e.touches?e.touches[0]:e;
-  ox=t.clientX-panel.offsetLeft;
-  oy=t.clientY-panel.offsetTop;
-}
-
-function moveDrag(e){
-  if(!dragging)return;
-  e.preventDefault();
-  let t=e.touches?e.touches[0]:e;
-  panel.style.left=(t.clientX-ox)+"px";
-  panel.style.top=(t.clientY-oy)+"px";
-}
-
-function stopDrag(){dragging=false;}
-
-const drag=document.getElementById("drag");
-drag.addEventListener("mousedown",startDrag);
-drag.addEventListener("touchstart",startDrag);
-
-document.addEventListener("mousemove",moveDrag);
-document.addEventListener("touchmove",moveDrag,{passive:false});
-
-document.addEventListener("mouseup",stopDrag);
-document.addEventListener("touchend",stopDrag);
-
-/* Styles */
-function setColor(c){data[selected.r][selected.c].style.color=c;render();}
-function setSize(s){data[selected.r][selected.c].style.fontSize=s+"px";render();}
-
-function toggleHeading(){
-  let s=data[selected.r][selected.c].style;
-  s.fontWeight=s.fontWeight==="bold"?"normal":"bold";
-  s.fontSize="22px";
-  render();
-}
-
-/* Download */
+// Export (APK safe)
 function download(){
-  html2canvas(document.getElementById("board")).then(c=>{
-    let a=document.createElement("a");
-    a.href=c.toDataURL();
-    a.download="list.png";
-    a.click();
-  });
+    const dataURL = canvas.toDataURL("image/png");
+
+    const div = document.createElement("div");
+    div.className = "export-screen";
+
+    div.innerHTML = `
+        <p>Long press image to save</p>
+        <img src="${dataURL}">
+        <br><br>
+        <button onclick="this.parentElement.remove()">⬅ Back</button>
+    `;
+
+    document.body.appendChild(div);
 }
 </script>
 
